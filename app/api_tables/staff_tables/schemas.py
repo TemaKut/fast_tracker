@@ -10,7 +10,7 @@ class HoursPercent(BaseModel):
 class WorkingTime(BaseModel):
     """ Месяц с указанием рабочих часов. """
 
-    name: str = None
+    staff: str = None
     january: HoursPercent | None = None
     february: HoursPercent | None = None
     march: HoursPercent | None = None
@@ -23,3 +23,23 @@ class WorkingTime(BaseModel):
     october: HoursPercent | None = None
     november: HoursPercent | None = None
     december: HoursPercent | None = None
+
+
+class WorkingTimeByMonthAndProjects(BaseModel):
+    """
+    Структура данных где по месяцам и проектам
+    разделены рабочие часы сотрудников
+    """
+
+    january: dict[str, dict[str, HoursPercent]] | None = None
+    february: dict[str, dict[str, HoursPercent]] | None = None
+    march: dict[str, dict[str, HoursPercent]] | None = None
+    april: dict[str, dict[str, HoursPercent]] | None = None
+    may: dict[str, dict[str, HoursPercent]] | None = None
+    june: dict[str, dict[str, HoursPercent]] | None = None
+    july: dict[str, dict[str, HoursPercent]] | None = None
+    august: dict[str, dict[str, HoursPercent]] | None = None
+    september: dict[str, dict[str, HoursPercent]] | None = None
+    october: dict[str, dict[str, HoursPercent]] | None = None
+    november: dict[str, dict[str, HoursPercent]] | None = None
+    december: dict[str, dict[str, HoursPercent]] | None = None

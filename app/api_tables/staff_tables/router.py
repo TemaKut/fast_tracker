@@ -4,8 +4,9 @@ from fastapi import APIRouter
 
 from .utils.staff_tables_utils import (
     CommonWorkingTimeTable, WorkingTimeByProjectsTable,
+    WorkingTimeByProjectsFactTable,
 )
-from .schemas import WorkingTime
+from .schemas import WorkingTime, WorkingTimeByMonthAndProjects
 
 
 staff_router = APIRouter(
@@ -17,16 +18,31 @@ staff_router = APIRouter(
 @staff_router.get('/common/plan', response_model=list[WorkingTime])
 async def common_plan_table(year: int = datetime.now().year):
     """ Эндпоинт таблицы планового рабочего времени. """
-    tables = CommonWorkingTimeTable(year=year)
-    table_data = await tables.get_data()
+    table = CommonWorkingTimeTable(year=year)
+    table_data = await table.get_data()
 
     return table_data
 
 
-@staff_router.get('/by-projects/plan')
+@staff_router.get(
+    '/by-projects/plan',
+    response_model=WorkingTimeByMonthAndProjects,
+)
 async def by_projects_plan(year: int = datetime.now().year):
     """ Эндпоинт таблицы планового рабочего времени по проектам """
-    tables = WorkingTimeByProjectsTable(year=year)
-    table_data = await tables.get_data()
+    table = WorkingTimeByProjectsTable(year=year)
+    table_data = await table.get_data()
 
-    return {}
+    return table_data
+
+
+@staff_router.get(
+    '/by-projects/fact',
+    response_model=WorkingTimeByMonthAndProjects,
+)
+async def by_projects_fact(year: int = datetime.now().year):
+    """ Эндпоинт таблицы планового рабочего времени по проектам """
+    table = WorkingTimeByProjectsFactTable(year=year)
+    table_data = await table.get_data()
+
+    return table_data

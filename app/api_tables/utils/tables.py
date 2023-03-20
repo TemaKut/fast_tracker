@@ -24,6 +24,20 @@ class Tables:
             "november": 168,
             "december": 168,
         }
+        self.decoded_months = {
+            '01': 'january',
+            '02': 'february',
+            '03': 'march',
+            '04': 'april',
+            '05': 'may',
+            '06': 'june',
+            '07': 'july',
+            '08': 'august',
+            '09': 'september',
+            '10': 'october',
+            '11': 'november',
+            '12': 'december',
+        }
 
     async def get_target_issues(self, issues: list, filter_: dict) -> list:
         """
@@ -92,28 +106,13 @@ class Tables:
 
     async def convert_num_month_to_str_month(self, num_month: str) -> str:
         """ Конвертировать числовое обозначение месяца в полное строчное """
-        decoded_months = {
-            '01': 'january',
-            '02': 'february',
-            '03': 'march',
-            '04': 'april',
-            '05': 'may',
-            '06': 'june',
-            '07': 'july',
-            '08': 'august',
-            '09': 'september',
-            '10': 'october',
-            '11': 'november',
-            '12': 'december',
-        }
-
-        if num_month not in decoded_months:
+        if num_month not in self.decoded_months:
             log.error('Месяц передан неправильно.')
             raise ValueError('Месяц передан неправильно.')
 
-        return decoded_months[num_month]
+        return self.decoded_months[num_month]
 
-    async def add_percent_to_hours(self, values: list[dict[str, int]]) -> dict:
+    async def add_percent_to_hours(self, values: list[dict[str, int]]) -> list:
         """ К значениям часов в месяц добавить процент относительно месяца. """
         data = []
 
