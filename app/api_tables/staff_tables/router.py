@@ -2,7 +2,7 @@ from datetime import datetime
 
 from fastapi import APIRouter
 
-from .utils.staff_tables_utils import (
+from .utils import (
     CommonWorkingTimeTable, WorkingTimeByProjectsTable,
     WorkingTimeByProjectsFactTable,
 )

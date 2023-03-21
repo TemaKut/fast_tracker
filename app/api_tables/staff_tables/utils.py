@@ -1,6 +1,7 @@
-from app.api_tables.utils.tables import Tables
-from app.source_tracker_api.utils import tracker_api
-from ..schemas import WorkingTime
+from ..utils import Tables
+from app.utils import tracker_api
+from .schemas import WorkingTime
+from app.settings import log
 
 
 class CommonWorkingTimeTable(Tables):
@@ -26,6 +27,9 @@ class CommonWorkingTimeTable(Tables):
                 'issue.end.split("-")[0]': str(self.year),
             },
         )
+
+        if not issues:
+            log.error('Задачи не получены')
 
         data = {}
 
@@ -92,6 +96,9 @@ class WorkingTimeByProjectsTable(Tables):
                 'issue.end.split("-")[0]': str(self.year),
             },
         )
+
+        if not issues:
+            log.error('Задачи не получены')
 
         return await self.distribute_issues_by_months(issues)
 
@@ -160,6 +167,9 @@ class WorkingTimeByProjectsFactTable(WorkingTimeByProjectsTable):
                 'issue.end.split("-")[0]': str(self.year),
             },
         )
+
+        if not issues:
+            log.error('Задачи не получены')
 
         return await self.distribute_issues_by_months(issues)
 

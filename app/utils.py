@@ -2,8 +2,8 @@ from copy import copy
 from threading import Thread
 from time import sleep
 
-from ..settings import log
-from ..settings import settings
+from .settings import log
+from .settings import settings
 
 
 class TrackerApi:

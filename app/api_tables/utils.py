@@ -3,7 +3,7 @@ from copy import copy
 from isodate import parse_duration
 
 from app.settings import log
-from ..staff_tables.schemas import HoursPercent
+from .staff_tables.schemas import HoursPercent
 
 
 class Tables:
@@ -60,7 +60,12 @@ class Tables:
 
                 try:
 
-                    if eval(key) == value:
+                    if isinstance(value, list):
+
+                        if eval(key) in value:
+                            count_validated_items += 1
+
+                    elif eval(key) == value:
                         count_validated_items += 1
 
                 except Exception:

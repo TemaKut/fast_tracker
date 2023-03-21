@@ -5,7 +5,38 @@ from loguru import logger
 
 class Settings(BaseSettings):
     """ Общий класс настроек. (Обращение через объект класса.)"""
+    # C какой переодичностью получать все задачи с трекера (>= 30сек!)
     PERIOG_GET_TASKS_SEC: int = 60
+    # Название очереди с выручкой
+    INCOMES_QUEUES: list = ['FINVYRUCKA']
+
+    # Название очереди с расходами
+    EXPENSES_QUEUES: list = ['FINRASHODY']
+
+    # Название очереди с зарплатами персонала
+    STAFF_SALARY_QUEUES: list = ['HRPERSONAL']
+
+    # Название очереди с поступлениями
+    RECEIPTS_QUEUES: list = ['FINPOSTUPLENIA']
+
+    # Название очереди с платежами
+    PAYMENTS_QUEUES: list = ['FINPLATEZI']
+
+    # Название очереди с налогами
+    TAX_QUEUES: list = ['TAXNALOGI']
+
+    # Очереди для рабочих задач
+    TEAMS_QUEUES: list = [
+        'TEAMVA',
+        'TEAMES',
+        'LAYVERSTKA',
+        'KOMANDAAA',
+        'ENGENGINEERS',
+        'DEVRAZRABOTKA',
+        'BIMRAZRABOTKA',
+        'ARCH',
+        'HYPD',
+    ]
 
     @property
     def tracker_client(self):
