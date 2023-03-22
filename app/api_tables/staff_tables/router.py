@@ -3,8 +3,8 @@ from datetime import datetime
 from fastapi import APIRouter
 
 from .utils import (
-    CommonWorkingTimeTable, WorkingTimeByProjectsTable,
-    WorkingTimeByProjectsFactTable,
+    CommonWorkingTimePlanTable, CommonWorkingTimeFactTable,
+    WorkingTimeByProjectsTable, WorkingTimeByProjectsFactTable,
 )
 from .schemas import WorkingTime, WorkingTimeByMonthAndProjects
 
@@ -17,8 +17,17 @@ staff_router = APIRouter(
 
 @staff_router.get('/common/plan', response_model=list[WorkingTime])
 async def common_plan_table(year: int = datetime.now().year):
-    """ Эндпоинт таблицы планового рабочего времени. """
-    table = CommonWorkingTimeTable(year=year)
+    """ Эндпоинт таблицы общ. рабочего времени (План). """
+    table = CommonWorkingTimePlanTable(year=year)
+    table_data = await table.get_data()
+
+    return table_data
+
+
+@staff_router.get('/common/fact', response_model=list[WorkingTime])
+async def common_fact_table(year: int = datetime.now().year):
+    """ Эндпоинт таблицы общ. рабочего времени (Факт). """
+    table = CommonWorkingTimeFactTable(year=year)
     table_data = await table.get_data()
 
     return table_data

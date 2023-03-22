@@ -8,8 +8,9 @@ from .staff_tables.schemas import HoursPercent
 
 class Tables:
     """ Класс низкоуровневых операций с таблицами. """
-    def __init__(self):
+    def __init__(self, year):
         """ Инициализация класса. """
+        self.year = year
         self.work_hours_per_month = {
             "january": 136,
             "february": 144,

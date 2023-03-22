@@ -31,15 +31,15 @@ class WorkingTimeByMonthAndProjects(BaseModel):
     разделены рабочие часы сотрудников
     """
 
-    january: dict[str, dict[str, HoursPercent]] | None = None
-    february: dict[str, dict[str, HoursPercent]] | None = None
-    march: dict[str, dict[str, HoursPercent]] | None = None
-    april: dict[str, dict[str, HoursPercent]] | None = None
-    may: dict[str, dict[str, HoursPercent]] | None = None
-    june: dict[str, dict[str, HoursPercent]] | None = None
-    july: dict[str, dict[str, HoursPercent]] | None = None
-    august: dict[str, dict[str, HoursPercent]] | None = None
-    september: dict[str, dict[str, HoursPercent]] | None = None
-    october: dict[str, dict[str, HoursPercent]] | None = None
-    november: dict[str, dict[str, HoursPercent]] | None = None
-    december: dict[str, dict[str, HoursPercent]] | None = None
+    january: dict[str, dict[str, HoursPercent | int]] | None = None
+    february: dict[str, dict[str, HoursPercent | int]] | None = None
+    march: dict[str, dict[str, HoursPercent | int]] | None = None
+    april: dict[str, dict[str, HoursPercent | int]] | None = None
+    may: dict[str, dict[str, HoursPercent | int]] | None = None
+    june: dict[str, dict[str, HoursPercent | int]] | None = None
+    july: dict[str, dict[str, HoursPercent | int]] | None = None
+    august: dict[str, dict[str, HoursPercent | int]] | None = None
+    september: dict[str, dict[str, HoursPercent | int]] | None = None
+    october: dict[str, dict[str, HoursPercent | int]] | None = None
+    november: dict[str, dict[str, HoursPercent | int]] | None = None
+    december: dict[str, dict[str, HoursPercent | int]] | None = None

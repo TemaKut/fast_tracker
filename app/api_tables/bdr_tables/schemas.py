@@ -19,12 +19,27 @@ class DataPerYear(BaseModel):
     amount: int | None = None
 
 
-class Bdr(BaseModel):
+class BdrCommon(BaseModel):
     """ Схема таблицы БДР. """
 
     incomes: dict[str, DataPerYear] | None = None
     direct_contractors: dict[str, DataPerYear] | None = None
+    fot_pp: dict[str, DataPerYear] | None = None
+    fot_aup: dict[str, DataPerYear] | None = None
     other_expenses: dict[str, DataPerYear] | None = None
     management_company: dict[str, DataPerYear] | None = None
     incomes_before_tax: dict[str, DataPerYear] | None = None
-    ebitda: dict[str, DataPerYear] | None = None
+
+
+class DataPerYearWithName(DataPerYear):
+    """ Схема данных (Для строки таблицы) с названием месяцами и суммой"""
+    name: str | None = None
+
+
+class Project(BaseModel):
+    """ Схема структуры проекта для таблиц по проектам. """
+    project_name: str | None = None
+    incomes: list[DataPerYearWithName] | None = None
+    expenses: list[DataPerYearWithName] | None = None
+    personal: list[DataPerYearWithName] | None = None
+    amounts: list[DataPerYearWithName] | None = None
