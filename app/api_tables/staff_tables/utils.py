@@ -1,6 +1,7 @@
+import json
+
 from ..utils import Tables
 from app.utils import tracker_api
-from .schemas import WorkingTime
 from app.settings import log
 
 
@@ -15,6 +16,7 @@ class CommonWorkingTimePlanTable(Tables):
             log.error('Задачи не получены')
 
         data = {}
+        data_links = {}
 
         for issue in issues:
 
@@ -29,31 +31,37 @@ class CommonWorkingTimePlanTable(Tables):
                 if hours <= 0:
                     continue
 
+                percent = 100 * (hours / self.work_hours_per_month[full_month])
+
                 # Проверка, что задача начата и закончена в одном месяце
                 await self.is_start_and_end_within_one_month(issue)
 
             except Exception:
                 continue
 
+            if data_links.get(staff):
+                data_links[staff].append(issue.key)
+            else:
+                data_links[staff] = [issue.key]
+
+            hours_percent = {'hours': hours, 'percent': percent}
+
             if data_staff := data.get(staff):
 
                 if data_staff.get(full_month):
-                    data_staff[full_month] += hours
+                    data_staff[full_month]['hours'] += hours
+                    data_staff[full_month]['percent'] += hours
                 else:
-                    data_staff[full_month] = hours
+                    data_staff[full_month] = hours_percent
 
             else:
                 pre_data = {
                     'staff': staff,
-                    full_month: hours,
+                    full_month: hours_percent,
                 }
                 data[staff] = pre_data
 
-        data_with_percent = await self.add_percent_to_hours(data.values())
-
-        data = [WorkingTime(**values) for values in data_with_percent]
-
-        return data
+        return await self.add_link_for_staff(data, data_links)
 
     async def get_issues_for_table(self):
         """ Получить целевые задачи. """
@@ -72,6 +80,17 @@ class CommonWorkingTimePlanTable(Tables):
         )
 
         return issues
+
+    async def add_link_for_staff(self, data, data_links):
+        """ Добавить к основным данным ссылки на используемые задачи. """
+        prefix = 'https://tracker.yandex.ru/issues/?key='
+        data_links = {key: json.dumps(val) for key, val in data_links.items()}
+
+        for value in data.values():
+            data_links_key = value.get('staff')
+            value['link'] = prefix + data_links[data_links_key]
+
+        return [values_ for values_ in data.values()]
 
 
 class CommonWorkingTimeFactTable(CommonWorkingTimePlanTable):
@@ -94,7 +113,7 @@ class CommonWorkingTimeFactTable(CommonWorkingTimePlanTable):
         )
 
         return issues
-    
+
     async def get_data(self, is_plan=False):
         """ Получить данные таблицы планового рабочего времени. """
 

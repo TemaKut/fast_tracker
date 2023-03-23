@@ -23,6 +23,7 @@ class WorkingTime(BaseModel):
     october: HoursPercent | None = None
     november: HoursPercent | None = None
     december: HoursPercent | None = None
+    link: str | None = None
 
 
 class WorkingTimeByMonthAndProjects(BaseModel):
@@ -31,15 +32,15 @@ class WorkingTimeByMonthAndProjects(BaseModel):
     разделены рабочие часы сотрудников
     """
 
-    january: dict[str, dict[str, HoursPercent | int]] | None = None
-    february: dict[str, dict[str, HoursPercent | int]] | None = None
-    march: dict[str, dict[str, HoursPercent | int]] | None = None
-    april: dict[str, dict[str, HoursPercent | int]] | None = None
-    may: dict[str, dict[str, HoursPercent | int]] | None = None
-    june: dict[str, dict[str, HoursPercent | int]] | None = None
-    july: dict[str, dict[str, HoursPercent | int]] | None = None
-    august: dict[str, dict[str, HoursPercent | int]] | None = None
-    september: dict[str, dict[str, HoursPercent | int]] | None = None
-    october: dict[str, dict[str, HoursPercent | int]] | None = None
-    november: dict[str, dict[str, HoursPercent | int]] | None = None
-    december: dict[str, dict[str, HoursPercent | int]] | None = None
+    january: dict[str, dict[str, HoursPercent | int | str]] | None = None
+    february: dict[str, dict[str, HoursPercent | int | str]] | None = None
+    march: dict[str, dict[str, HoursPercent | int | str]] | None = None
+    april: dict[str, dict[str, HoursPercent | int | str]] | None = None
+    may: dict[str, dict[str, HoursPercent | int | str]] | None = None
+    june: dict[str, dict[str, HoursPercent | int | str]] | None = None
+    july: dict[str, dict[str, HoursPercent | int | str]] | None = None
+    august: dict[str, dict[str, HoursPercent | int | str]] | None = None
+    september: dict[str, dict[str, HoursPercent | int | str]] | None = None
+    october: dict[str, dict[str, HoursPercent | int | str]] | None = None
+    november: dict[str, dict[str, HoursPercent | int | str]] | None = None
+    december: dict[str, dict[str, HoursPercent | int | str]] | None = None

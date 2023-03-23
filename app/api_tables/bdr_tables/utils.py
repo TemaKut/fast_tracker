@@ -1,9 +1,8 @@
-from pprint import pprint
-
 from app.settings import log
 from app.settings import settings as s
 from app.utils import tracker_api
 from ..utils import Tables
+from .schemas import BdrCommon
 
 
 class BdrPlanTable(Tables):
@@ -13,14 +12,7 @@ class BdrPlanTable(Tables):
         """ Получить данные таблицы. """
         issues = await self.get_issues()
 
-        data = {
-            'incomes': {},
-            'direct_contractors': {},
-            'fot_pp': {},
-            'fot_aup': {},
-            'other_expenses': {},
-            'management_company': {},
-        }
+        data = BdrCommon().dict()
 
         for issue in issues:
             queue = issue.queue.key
@@ -28,32 +20,32 @@ class BdrPlanTable(Tables):
             tags = issue.tags
 
             if queue in s.INCOMES_QUEUES:
-                await self.distribute_data_by_articles(
+                await self.distribute_data(
                     issue, data, 'incomes',
                 )
 
             elif queue in s.EXPENSES_QUEUES and 'Прямые подрядчики' in stata_b:
-                await self.distribute_data_by_articles(
+                await self.distribute_data(
                     issue, data, 'direct_contractors',
                 )
 
             elif queue in s.STAFF_SALARY_QUEUES and 'ПП' in tags:
-                await self.distribute_data_by_articles(
+                await self.distribute_data(
                     issue, data, 'fot_pp',
                 )
 
             elif queue in s.STAFF_SALARY_QUEUES and 'АУП' in tags:
-                await self.distribute_data_by_articles(
+                await self.distribute_data(
                     issue, data, 'fot_aup',
                 )
 
             elif queue in s.EXPENSES_QUEUES and 'Прочие расходы' in stata_b:
-                await self.distribute_data_by_articles(
+                await self.distribute_data(
                     issue, data, 'other_expenses',
                 )
 
             elif queue in s.EXPENSES_QUEUES and 'Услуги УК' in stata_b:
-                await self.distribute_data_by_articles(
+                await self.distribute_data(
                     issue, data, 'management_company',
                 )
 
@@ -79,7 +71,7 @@ class BdrPlanTable(Tables):
 
         return issues
 
-    async def distribute_data_by_articles(self, issue, data, key) -> None:
+    async def distribute_data(self, issue, data, key) -> None:
         """
         Метод распределения данных из задачи по объекту словаря.
         Метод получает объект словаря и изменяет его, ничего не возвращая.
@@ -156,6 +148,7 @@ class BdrFactTable(BdrPlanTable):
         return await super().get_target_month(issue, target_)
 
 
+# TODO: Дописать класс!!!
 class BdrByProjectsPlan(Tables):
     """ Утилиты таблицы БДР по проектам (План). """
 
@@ -215,6 +208,3 @@ class BdrByProjectsPlan(Tables):
                         }
                     ] if queue in s.INCOMES_QUEUES else []
                 }
-
-
-        pprint(data)

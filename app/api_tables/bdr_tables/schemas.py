@@ -22,13 +22,13 @@ class DataPerYear(BaseModel):
 class BdrCommon(BaseModel):
     """ Схема таблицы БДР. """
 
-    incomes: dict[str, DataPerYear] | None = None
-    direct_contractors: dict[str, DataPerYear] | None = None
-    fot_pp: dict[str, DataPerYear] | None = None
-    fot_aup: dict[str, DataPerYear] | None = None
-    other_expenses: dict[str, DataPerYear] | None = None
-    management_company: dict[str, DataPerYear] | None = None
-    incomes_before_tax: dict[str, DataPerYear] | None = None
+    incomes: dict[str, DataPerYear] = {}
+    direct_contractors: dict[str, DataPerYear] = {}
+    fot_pp: dict[str, DataPerYear] = {}
+    fot_aup: dict[str, DataPerYear] = {}
+    other_expenses: dict[str, DataPerYear] = {}
+    management_company: dict[str, DataPerYear] = {}
+    incomes_before_tax: dict[str, DataPerYear] = {}
 
 
 class DataPerYearWithName(DataPerYear):

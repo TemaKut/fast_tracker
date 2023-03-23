@@ -8,7 +8,7 @@ from .staff_tables.schemas import HoursPercent
 
 class Tables:
     """ Класс низкоуровневых операций с таблицами. """
-    def __init__(self, year):
+    def __init__(self, year: int):
         """ Инициализация класса. """
         self.year = year
         self.work_hours_per_month = {
@@ -117,24 +117,3 @@ class Tables:
             raise ValueError('Месяц передан неправильно.')
 
         return self.decoded_months[num_month]
-
-    async def add_percent_to_hours(self, values: list[dict[str, int]]) -> list:
-        """ К значениям часов в месяц добавить процент относительно месяца. """
-        data = []
-
-        for value in values:
-            new_value = copy(value)
-
-            for key, val in value.items():
-
-                if isinstance(val, str | list):
-                    continue
-
-                new_value[key] = HoursPercent(
-                    hours=val,
-                    percent=100 * (val / self.work_hours_per_month.get(key)),
-                )
-
-            data.append(new_value)
-
-        return data
