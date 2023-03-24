@@ -30,10 +30,10 @@ async def bdr_fact(year: int = datetime.now().year):
     return result
 
 
-# @bdr_router.get('/by-projects/plan', response_model=list[Project])
-# async def bdr_by_projects_plan(year: int = datetime.now().year):
-#     """ Эндпоинт таблицы БДР по проектам (План). """
-#     table = BdrByProjectsPlan(year)
-#     await table.get_data()
+@bdr_router.get('/by-projects/plan', response_model=dict[str, Project])
+async def bdr_by_projects_plan(year: int = datetime.now().year):
+    """ Эндпоинт таблицы БДР по проектам (План). """
+    table = BdrByProjectsPlan(year)
+    result = await table.get_data()
 
-#     return [{}]
+    return result

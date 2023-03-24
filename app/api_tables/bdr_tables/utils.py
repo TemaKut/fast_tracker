@@ -1,3 +1,5 @@
+from pprint import pprint
+
 from app.settings import log
 from app.settings import settings as s
 from app.utils import tracker_api
@@ -155,7 +157,8 @@ class BdrByProjectsPlan(Tables):
     async def get_data(self):
         """ Получить данные таблицы. """
         issues = await self.get_issues()
-        await self.split_issues_by_projects(issues)
+
+        return await self.split_issues_by_projects(issues)
 
     async def get_issues(self):
         """ Получить все нужные задачи. """
@@ -182,29 +185,114 @@ class BdrByProjectsPlan(Tables):
         data = {}
         for issue in issues:
 
+            # Проверка наличия необходимых аттрибутов у задачи
             try:
                 project_name = issue.project.display
                 queue = issue.queue.key
                 month = await self.get_target_month(issue)
                 full_month = await self.convert_num_month_to_str_month(month)
                 summary = issue.summary
-                summa = issue.summaEtapa
+                staff = issue.assignee.display
 
             except AttributeError:
                 continue
 
-            if data.get(project_name):
-                pass
+            # Принадлежность задачи к той или иной очереди
+            inc_issue = (
+                issue
+                if queue in s.INCOMES_QUEUES
+                and issue.summaEtapa
+                else None
+            )
+            exp_issue = (
+                issue
+                if queue in s.EXPENSES_QUEUES
+                and issue.summaEtapa
+                else None
+            )
+            staff_issue = (
+                issue
+                if queue in s.TEAMS_QUEUES
+                and issue.originalEstimation
+                else None
+            )
+
+            # Распределение данных за O(n)
+            if d_p := data.get(project_name):
+
+                # Операции с доходами
+                if inc_issue:
+
+                    if d_p_i := d_p.get('incomes'):
+
+                        if d_p_i_s := d_p_i.get(summary):
+
+                            if d_p_i_s_fm := d_p_i_s.get(full_month):
+                                d_p_i_s_fm += issue.summaEtapa
+
+                            else:
+                                d_p_i_s[full_month] = issue.summaEtapa
+
+                        else:
+                            d_p_i[summary] = {full_month: issue.summaEtapa}
+
+                    else:
+                        d_p['incomes'] = {summary: {full_month: issue.summaEtapa}}
+
+                # Операции с расходами
+                if exp_issue:
+
+                    if d_p_i := d_p.get('expenses'):
+
+                        if d_p_i_s := d_p_i.get(summary):
+
+                            if d_p_i_s_fm := d_p_i_s.get(full_month):
+                                d_p_i_s_fm += issue.summaEtapa
+
+                            else:
+                                d_p_i_s[full_month] = issue.summaEtapa
+
+                        else:
+                            d_p_i[summary] = {full_month: issue.summaEtapa}
+
+                    else:
+                        d_p['expenses'] = {summary: {full_month: issue.summaEtapa}}
+
+                # Операции с сотрудниками
+                if staff_issue:
+                    duration = issue.originalEstimation
+                    hours = await self.duration_to_work_hours(duration)
+
+                    if d_p_p := d_p.get('personal'):
+
+                        if d_p_p_s := d_p_p.get(staff):
+
+                            if d_p_p_s.get(full_month):
+                                d_p_p_s[full_month] += hours
+
+                            else:
+                                d_p_p_s[full_month] = hours
+
+                        else:
+                            d_p_p[staff] = {full_month: hours}
+
+                    else:
+                        d_p['personal'] = {staff: {full_month: hours}}
 
             else:
                 data[project_name] = {
-                    'project_name': project_name,
-                    'incomes': [
-                        {
-                            summary: {
-                                'name': summary,
-                                full_month: summa,
-                            }
-                        }
-                    ] if queue in s.INCOMES_QUEUES else []
+                    'incomes': {
+                        summary: {full_month: issue.summaEtapa},
+                    } if inc_issue else {},
+                    'expenses': {
+                        summary: {full_month: issue.summaEtapa},
+                    } if exp_issue else {},
                 }
+
+                if staff_issue:
+                    duration = issue.originalEstimation
+                    hours = await self.duration_to_work_hours(duration)
+
+                    data[project_name]['personal'] = {staff: {full_month: hours}}
+
+        return data

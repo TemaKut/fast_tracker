@@ -1,9 +1,6 @@
-from copy import copy
-
 from isodate import parse_duration
 
 from app.settings import log
-from .staff_tables.schemas import HoursPercent
 
 
 class Tables:

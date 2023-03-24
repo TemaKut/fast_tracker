@@ -31,15 +31,8 @@ class BdrCommon(BaseModel):
     incomes_before_tax: dict[str, DataPerYear] = {}
 
 
-class DataPerYearWithName(DataPerYear):
-    """ Схема данных (Для строки таблицы) с названием месяцами и суммой"""
-    name: str | None = None
-
-
 class Project(BaseModel):
     """ Схема структуры проекта для таблиц по проектам. """
-    project_name: str | None = None
-    incomes: list[DataPerYearWithName] | None = None
-    expenses: list[DataPerYearWithName] | None = None
-    personal: list[DataPerYearWithName] | None = None
-    amounts: list[DataPerYearWithName] | None = None
+    incomes: dict[str, DataPerYear] | None = None
+    expenses: dict[str, DataPerYear] | None = None
+    personal: dict[str, DataPerYear] | None = None
