@@ -3,6 +3,9 @@ from app.settings import settings as s
 from app.utils import tracker_api
 from ..utils import Tables
 from .schemas import BdrCommon
+from pprint import pprint
+
+from app.utils import tracker_api
 
 
 class BdrPlanTable(Tables):
@@ -196,6 +199,7 @@ class BdrByProjectsPlan(Tables):
     async def split_issues_by_projects(self, issues):
         """ Распределить данные из задач по проектам. """
         data = {}
+        pesronal_salaryes = await tracker_api.get_personal_salaryes()
 
         for issue in issues:
 
@@ -275,25 +279,46 @@ class BdrByProjectsPlan(Tables):
                 # Операции с сотрудниками
                 if staff_issue:
                     hours = await self.duration_to_work_hours(dur)
+                    salary = pesronal_salaryes.get(month).get(staff, 0)
+
+                    if hours <= 0:
+                        continue
 
                     if d_p_p := d_p.get('personal'):
 
                         if d_p_p_s := d_p_p.get(staff):
 
                             if d_p_p_s.get(full_month):
-                                d_p_p_s[full_month] += hours
+                                d_p_p_s[full_month]['hours'] += hours
+                                d_p_p_s[full_month]['salary'] += hours * salary
                                 d_p_p_s['amount'] += hours
 
                             else:
-                                d_p_p_s[full_month] = hours
+                                d_p_p_s[full_month] = {
+                                    'hours': hours,
+                                    'salary': hours * salary,
+                                }
+
                                 d_p_p_s['amount'] += hours
 
                         else:
-                            d_p_p[staff] = {full_month: hours, 'amount': hours}
+                            d_p_p[staff] = {
+                                full_month: {
+                                    'hours': hours,
+                                    'salary': hours * salary,
+                                },
+                                'amount': hours,
+                            }
 
                     else:
                         d_p['personal'] = {
-                            staff: {full_month: hours, 'amount': hours},
+                            staff: {
+                                full_month: {
+                                    'hours': hours,
+                                    'salary': hours * salary,
+                                },
+                                'amount': hours,
+                            }
                         }
 
             # Если в данных нет информации о проекте
@@ -312,9 +337,19 @@ class BdrByProjectsPlan(Tables):
                 # ..Если задачу можно характеризовать как сотрудническую
                 if staff_issue:
                     hours = await self.duration_to_work_hours(dur)
+                    salary = pesronal_salaryes.get(month).get(staff, 0)
+
+                    if hours <= 0:
+                        continue
 
                     data[project_name]['personal'] = {
-                        staff: {full_month: hours, 'amount': hours},
+                        staff: {
+                            full_month: {
+                                'hours': hours,
+                                'salary': hours * salary,
+                            },
+                            'amount': hours,
+                        }
                     }
 
         return data

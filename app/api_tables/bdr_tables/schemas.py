@@ -1,3 +1,5 @@
+from typing import Any
+
 from pydantic import BaseModel
 
 
@@ -35,4 +37,4 @@ class Project(BaseModel):
     """ Схема структуры проекта для таблиц по проектам. """
     incomes: dict[str, DataPerYear] | None = None
     expenses: dict[str, DataPerYear] | None = None
-    personal: dict[str, DataPerYear] | None = None
+    personal: dict[str, dict[str, Any]] | None = None
