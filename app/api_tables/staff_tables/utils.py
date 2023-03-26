@@ -212,6 +212,18 @@ class WorkingTimeByProjectsTable(Tables):
                     staff: {project: hours_percent, 'amount_hours': hours},
                 }
 
+            # Добавление сумм для каждого месяца (По проектам)
+            if c_a := data[full_month].get('common_amounts'):
+
+                if c_a.get(project):
+                    c_a[project] += hours
+
+                else:
+                    c_a[project] = hours
+
+            else:
+                data[full_month]['common_amounts'] = {project: hours}
+
         return data
 
 

@@ -81,7 +81,10 @@ class BdrPlanTable(Tables):
         Метод распределения данных из задачи по объекту словаря.
         Метод получает объект словаря и изменяет его, ничего не возвращая.
         """
-        if not data.get(key):
+        try:
+            data[key]
+
+        except KeyError:
             log.critical('Такого ключа в словаре нет.')
             raise KeyError(f'Такого ключа в словаре нет. ({key})')
 
