@@ -10,8 +10,10 @@ class DdsPlanTable(BdrPlanTable):
 
     async def get_data(self):
         """ Получить данные таблицы. """
+        # Все подходящие задачи
         issues = await self.get_issues()
 
+        # Шаблон данных из схемы в виде словаря
         data = DdsCommon()
         data = data.dict()
 
@@ -19,6 +21,7 @@ class DdsPlanTable(BdrPlanTable):
             queue = issue.queue.key
             tags = issue.tags
 
+            # Распределение данных по соответствующим признакам в data
             if queue in s.RECEIPTS_QUEUES:
                 await self.distribute_data(issue, data, 'incomes')
 
@@ -71,8 +74,10 @@ class DdsPlanTable(BdrPlanTable):
 
     async def get_issues(self):
         """ Получить все нужные задачи. """
+        # Все задачи
         all_issues = await tracker_api.get_list_issues()
 
+        # Допустимые очереди
         queues = s.RECEIPTS_QUEUES + s.PAYMENTS_QUEUES + s.TAX_QUEUES
 
         filter_ = {
@@ -95,8 +100,10 @@ class DdsFactTable(DdsPlanTable):
 
     async def get_issues(self):
         """ Получить все нужные задачи. """
+        # Все задачи
         all_issues = await tracker_api.get_list_issues()
 
+        # Допустимые очереди
         queues = s.RECEIPTS_QUEUES + s.PAYMENTS_QUEUES + s.TAX_QUEUES
 
         filter_ = {
@@ -114,6 +121,6 @@ class DdsFactTable(DdsPlanTable):
         return issues
 
     async def get_target_month(self, issue, target_: str = 'deadline'):
-        """ Получить целевой месяц задачи. """
+        """ Получить целевой месяц задачи. (Переопределение на deadline) """
 
         return await super().get_target_month(issue, target_)

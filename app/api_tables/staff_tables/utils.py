@@ -10,11 +10,13 @@ class CommonWorkingTimePlanTable(Tables):
 
     async def get_data(self, is_plan=True):
         """ Получить данные таблицы планового рабочего времени. """
+        # Все подходящие задачи
         issues = await self.get_issues_for_table()
 
         if not issues:
             log.error('Задачи не получены')
 
+        # data -> Общие данные data_links -> {Имя сотрудника: ключи задач}
         data = {}
         data_links = {}
 
@@ -39,6 +41,7 @@ class CommonWorkingTimePlanTable(Tables):
             except Exception:
                 continue
 
+            # Добавление ключей задач в список ссылок для каждого сотрудника
             if data_links.get(staff):
                 data_links[staff].append(issue.key)
             else:
@@ -46,14 +49,19 @@ class CommonWorkingTimePlanTable(Tables):
 
             hours_percent = {'hours': hours, 'percent': percent}
 
+            # Если в данных уже есть сотрудник
             if data_staff := data.get(staff):
 
+                # Если ранее записан месяц
                 if data_staff.get(full_month):
                     data_staff[full_month]['hours'] += hours
                     data_staff[full_month]['percent'] += hours
+
+                # Если месяца нет
                 else:
                     data_staff[full_month] = hours_percent
 
+            # Если в данных нет сотрудника
             else:
                 pre_data = {
                     'staff': staff,
@@ -65,6 +73,7 @@ class CommonWorkingTimePlanTable(Tables):
 
     async def get_issues_for_table(self):
         """ Получить целевые задачи. """
+        # Все задачи
         all_issues = await tracker_api.get_list_issues()
 
         # Из общего списка задач фильтровать нужные
@@ -98,6 +107,7 @@ class CommonWorkingTimeFactTable(CommonWorkingTimePlanTable):
 
     async def get_issues_for_table(self):
         """ Получить целевые задачи. """
+        # Все задачи
         all_issues = await tracker_api.get_list_issues()
 
         # Из общего списка задач фильтровать нужные
@@ -125,6 +135,7 @@ class WorkingTimeByProjectsTable(Tables):
 
     async def get_data(self):
         """ Получить данные таблицы  """
+        # Все задачи
         all_issues = await tracker_api.get_list_issues()
 
         # Из общего списка задач фильтровать нужные
@@ -171,25 +182,31 @@ class WorkingTimeByProjectsTable(Tables):
 
             hours_percent = {'hours': hours, 'percent': percent}
 
+            # Если в данных был записан месяц
             if d_m := data.get(full_month):
 
+                # Если записан соответствующий сотрудник
                 if d_m_s := d_m.get(staff):
 
+                    # Если записан проект
                     if d_m_s_p := d_m_s.get(project):
                         d_m_s_p['hours'] += hours
                         d_m_s_p['percent'] += percent
                         d_m_s['amount_hours'] += hours
 
+                    # Если проекта нет
                     else:
                         d_m_s[project] = hours_percent
                         d_m_s['amount_hours'] += hours
 
+                # Если сотрудника нет
                 else:
                     d_m[staff] = {
                         project: hours_percent,
                         'amount_hours': hours,
                     }
 
+            # Если в данных нет соответствующего месяца
             else:
                 data[full_month] = {
                     staff: {project: hours_percent, 'amount_hours': hours},
