@@ -42,7 +42,7 @@ async def by_projects_plan(year: int = datetime.now().year):
     table = WorkingTimeByProjectsTable(year=year)
     table_data = await table.get_data()
 
-    return table_data
+    return WorkingTimeByMonthAndProjects(**table_data)
 
 
 @staff_router.get(
@@ -54,4 +54,4 @@ async def by_projects_fact(year: int = datetime.now().year):
     table = WorkingTimeByProjectsFactTable(year=year)
     table_data = await table.get_data()
 
-    return table_data
+    return WorkingTimeByMonthAndProjects(**table_data)

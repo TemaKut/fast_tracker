@@ -1,8 +1,7 @@
-from copy import copy
+from copy import copy, deepcopy
 from threading import Thread
 from time import sleep
 from datetime import datetime as dt
-from pprint import pprint
 
 from .settings import log
 from .settings import settings
@@ -73,7 +72,7 @@ class TrackerApi:
             log.critical('Не удалось получить зарплаты сотрудников')
             raise ValueError('Не удалось получить зарплаты сотрудников')
 
-        return self.hour_salary_for_personal
+        return deepcopy(self.hour_salary_for_personal)
 
     def __put_hour_salary_for_personal(self, issues: list) -> None:
         """ Из всех задач вычислить часовую зарплату для персонала. """

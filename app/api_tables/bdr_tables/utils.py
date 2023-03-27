@@ -222,6 +222,12 @@ class BdrByProjectsPlan(Tables):
             exp_issue = issue if queue in s.EXPENSES_QUEUES and summa else None
             staff_issue = issue if queue in s.TEAMS_QUEUES and dur else None
 
+            try:
+                salary = pesronal_salaryes.get(month).get(staff, 0)
+
+            except AttributeError:
+                salary = 0
+
             # Распределение данных за O(n)
             # Если в данных есть информация о проекте
             if d_p := data.get(project_name):
@@ -279,7 +285,7 @@ class BdrByProjectsPlan(Tables):
                 # Операции с сотрудниками
                 if staff_issue:
                     hours = await self.duration_to_work_hours(dur)
-                    salary = pesronal_salaryes.get(month).get(staff, 0)
+                    salary = hours * salary
 
                     if hours <= 0:
                         continue
@@ -290,24 +296,27 @@ class BdrByProjectsPlan(Tables):
 
                             if d_p_p_s.get(full_month):
                                 d_p_p_s[full_month]['hours'] += hours
-                                d_p_p_s[full_month]['salary'] += hours * salary
-                                d_p_p_s['amount'] += hours
+                                d_p_p_s[full_month]['salary'] += salary
+                                d_p_p_s['amount_hours'] += hours
+                                d_p_p_s['amount_salary'] += salary
 
                             else:
                                 d_p_p_s[full_month] = {
                                     'hours': hours,
-                                    'salary': hours * salary,
+                                    'salary': salary,
                                 }
 
-                                d_p_p_s['amount'] += hours
+                                d_p_p_s['amount_hours'] += hours
+                                d_p_p_s['amount_salary'] += salary
 
                         else:
                             d_p_p[staff] = {
                                 full_month: {
                                     'hours': hours,
-                                    'salary': hours * salary,
+                                    'salary': salary,
                                 },
-                                'amount': hours,
+                                'amount_hours': hours,
+                                'amount_salary': salary,
                             }
 
                     else:
@@ -315,9 +324,10 @@ class BdrByProjectsPlan(Tables):
                             staff: {
                                 full_month: {
                                     'hours': hours,
-                                    'salary': hours * salary,
+                                    'salary': salary,
                                 },
-                                'amount': hours,
+                                'amount_hours': hours,
+                                'amount_salary': salary,
                             }
                         }
 
@@ -337,7 +347,7 @@ class BdrByProjectsPlan(Tables):
                 # ..Если задачу можно характеризовать как сотрудническую
                 if staff_issue:
                     hours = await self.duration_to_work_hours(dur)
-                    salary = pesronal_salaryes.get(month).get(staff, 0)
+                    salary = hours * salary
 
                     if hours <= 0:
                         continue
@@ -346,9 +356,10 @@ class BdrByProjectsPlan(Tables):
                         staff: {
                             full_month: {
                                 'hours': hours,
-                                'salary': hours * salary,
+                                'salary': salary,
                             },
-                            'amount': hours,
+                            'amount_hours': hours,
+                            'amount_salary': salary,
                         }
                     }
 

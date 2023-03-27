@@ -5,8 +5,12 @@ from loguru import logger
 
 class Settings(BaseSettings):
     """ Общий класс настроек. (Обращение через объект класса.)"""
+    # URL подключения к БД
+    DATABASE_URL = 'sqlite://app/database/database.sqlite3'
+
     # C какой переодичностью получать все задачи с трекера (>= 30сек!)
     PERIOG_GET_TASKS_SEC: int = 60
+
     # Название очереди с выручкой
     INCOMES_QUEUES: list = ['FINVYRUCKA']
 
