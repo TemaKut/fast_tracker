@@ -3,7 +3,9 @@ from datetime import datetime
 from fastapi import APIRouter
 
 from .schemas import BdrCommon, Project
-from .utils import BdrPlanTable, BdrFactTable, BdrByProjectsPlan
+from .utils import (
+    BdrPlanTable, BdrFactTable, BdrByProjectsPlan, BdrByProjectsFact
+)
 
 
 bdr_router = APIRouter(
@@ -35,5 +37,14 @@ async def bdr_by_projects_plan(year: int = datetime.now().year):
     """ Эндпоинт таблицы БДР по проектам (План). """
     table = BdrByProjectsPlan(year)
     result = await table.get_data()
+
+    return result
+
+
+@bdr_router.get('/by-projects/fact', response_model=dict[str, Project])
+async def bdr_by_projects_fact(year: int = datetime.now().year):
+    """ Эндпоинт таблицы БДР по проектам (Факт). """
+    table = BdrByProjectsFact(year)
+    result = await table.get_data(is_plan=False)
 
     return result

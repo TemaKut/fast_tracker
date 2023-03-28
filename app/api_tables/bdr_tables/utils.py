@@ -3,9 +3,6 @@ from app.settings import settings as s
 from app.utils import tracker_api
 from ..utils import Tables
 from .schemas import BdrCommon
-from pprint import pprint
-
-from app.utils import tracker_api
 
 
 class BdrPlanTable(Tables):
@@ -167,12 +164,12 @@ class BdrFactTable(BdrPlanTable):
 class BdrByProjectsPlan(Tables):
     """ Утилиты таблицы БДР по проектам (План). """
 
-    async def get_data(self):
+    async def get_data(self, is_plan=True):
         """ Получить данные таблицы. """
         # Все подходящие задачи
-        issues = await self.get_issues()
+        issues = await tracker_api.get_list_issues()
 
-        return await self.split_issues_by_projects(issues)
+        return await self.split_issues_by_projects(issues, is_plan=is_plan)
 
     async def get_issues(self):
         """ Получить все нужные задачи. """
@@ -185,7 +182,7 @@ class BdrByProjectsPlan(Tables):
         filter_ = {
             'issue.queue.key': queues,
             'bool(issue.project)': True,
-            'issue.end.split("-")[0]': str(self.year),
+            'bool(issue.queue)': True,
         }
 
         # Из общего списка задач фильтровать нужные
@@ -196,7 +193,7 @@ class BdrByProjectsPlan(Tables):
 
         return issues
 
-    async def split_issues_by_projects(self, issues):
+    async def split_issues_by_projects(self, issues, is_plan=True):
         """ Распределить данные из задач по проектам. """
         data = {}
         pesronal_salaryes = await tracker_api.get_personal_salaryes()
@@ -207,26 +204,48 @@ class BdrByProjectsPlan(Tables):
             try:
                 project_name = issue.project.display
                 queue = issue.queue.key
-                month = await self.get_target_month(issue)
-                full_month = await self.convert_num_month_to_str_month(month)
                 summary = issue.summary
                 summa = issue.summaEtapa  # Допускается None (Для сотрудников)
-                dur = issue.originalEstimation
                 staff = issue.assignee.display
 
             except AttributeError:
                 continue
 
             # Принадлежность задачи к той или иной очереди
-            inc_issue = issue if queue in s.INCOMES_QUEUES and summa else None
-            exp_issue = issue if queue in s.EXPENSES_QUEUES and summa else None
-            staff_issue = issue if queue in s.TEAMS_QUEUES and dur else None
-
+            inc_issue = None
+            exp_issue = None
+            staff_issue = None
             try:
-                salary = pesronal_salaryes.get(month).get(staff, 0)
+                if queue in s.INCOMES_QUEUES and summa:
+                    m = await self.get_target_month(
+                        issue, 'end' if is_plan else 'deadline'
+                    )
+                    full_month = await self.convert_num_month_to_str_month(m)
+                    inc_issue = issue
 
-            except AttributeError:
-                salary = 0
+                elif queue in s.EXPENSES_QUEUES and summa:
+                    m = await self.get_target_month(
+                        issue, 'end' if is_plan else 'deadline'
+                    )
+                    full_month = await self.convert_num_month_to_str_month(m)
+                    exp_issue = issue
+
+                elif queue in s.TEAMS_QUEUES:
+                    m = await self.get_target_month(issue)
+                    full_month = await self.convert_num_month_to_str_month(m)
+                    staff_issue = issue
+                    dur = issue.originalEstimation if is_plan else issue.spent
+
+                    if not isinstance(dur, str):
+                        continue
+
+                    try:
+                        salary = pesronal_salaryes.get(m).get(staff, 0)
+
+                    except AttributeError:
+                        salary = 0
+            except Exception:
+                continue
 
             # Распределение данных за O(n)
             # Если в данных есть информация о проекте
@@ -364,3 +383,27 @@ class BdrByProjectsPlan(Tables):
                     }
 
         return data
+
+    async def get_target_month(self, issue, target_: str = 'end'):
+        """ Получить целевой месяц задачи. """
+        if target_ not in ['end', 'deadline']:
+            log.error('target_ -> in ["end", "deadline"]')
+            raise ValueError('target_ -> in ["end", "deadline"]')
+
+        if target_ == 'end':
+
+            if issue.end.split("-")[0] != str(self.year):
+                raise ValueError('Не подходящая по году задача')
+
+            return issue.end.split("-")[1]
+
+        if issue.deadline.split("-")[0] != str(self.year):
+            raise ValueError('Не подходящая по году задача')
+
+        return issue.deadline.split("-")[1]
+
+
+class BdrByProjectsFact(BdrByProjectsPlan):
+    """ Утилиты таблицы БДР по проектам (Факт). """
+
+    pass

@@ -21,3 +21,9 @@ class DdsCommon(BaseModel):
     old_contractors: dict[str, DataPerYear] = {}
     loans_shareholders: dict[str, DataPerYear] = {}
     interest_on_loans: dict[str, DataPerYear] = {}
+
+
+class Project(BaseModel):
+    """ Схема структуры проекта для таблиц по проектам. """
+    incomes: dict[str, DataPerYear] | None = None
+    expenses: dict[str, DataPerYear] | None = None
