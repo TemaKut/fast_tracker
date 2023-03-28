@@ -3,7 +3,6 @@ import json
 from ..utils import Tables
 from app.utils import tracker_api
 from app.settings import log
-from app.api_auth.models import Company
 
 
 class CommonWorkingTimePlanTable(Tables):
@@ -193,24 +192,33 @@ class WorkingTimeByProjectsTable(Tables):
                     if d_m_s_p := d_m_s.get(project):
                         d_m_s_p['hours'] += hours
                         d_m_s_p['percent'] += percent
+
                         d_m_s['amount_hours'] += hours
+                        d_m_s['amount_percent'] += percent
 
                     # Если проекта нет
                     else:
                         d_m_s[project] = hours_percent
+
                         d_m_s['amount_hours'] += hours
+                        d_m_s['amount_percent'] += percent
 
                 # Если сотрудника нет
                 else:
                     d_m[staff] = {
                         project: hours_percent,
                         'amount_hours': hours,
+                        'amount_percent': percent,
                     }
 
             # Если в данных нет соответствующего месяца
             else:
                 data[full_month] = {
-                    staff: {project: hours_percent, 'amount_hours': hours},
+                    staff: {
+                        project: hours_percent,
+                        'amount_hours': hours,
+                        'amount_percent': percent,
+                    }
                 }
 
             # Добавление сумм для каждого месяца (По проектам)
