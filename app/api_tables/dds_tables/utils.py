@@ -1,9 +1,16 @@
+import os
+
+from dotenv import load_dotenv
+
+from app.api_auth.models import Company
 from app.settings import log
-from app.settings import settings as s
 from app.utils import tracker_api
 from ..bdr_tables.utils import BdrPlanTable
 from ..utils import Tables
 from .schemas import DdsCommon
+
+# Подгрузить данные из .env
+load_dotenv()
 
 
 class DdsPlanTable(BdrPlanTable):
@@ -14,6 +21,14 @@ class DdsPlanTable(BdrPlanTable):
         # Все подходящие задачи
         issues = await self.get_issues()
 
+        # Объект компании из БД
+        company = await Company.get(login=os.getenv('COMPANY_LOGIN'))
+
+        # Список допустимых очередей
+        rec_queues = company.receipts_queues
+        pay_queues = company.payments_queues
+        tax_queues = company.tax_queues
+
         # Шаблон данных из схемы в виде словаря
         data = DdsCommon()
         data = data.dict()
@@ -23,52 +38,49 @@ class DdsPlanTable(BdrPlanTable):
             tags = issue.tags
 
             # Распределение данных по соответствующим признакам в data
-            if queue in s.RECEIPTS_QUEUES:
+            if queue in rec_queues:
                 await self.distribute_data(issue, data, 'incomes')
 
-            elif queue in s.PAYMENTS_QUEUES and 'Текущий_подрядчик' in tags:
+            elif queue in pay_queues and 'Текущий_подрядчик' in tags:
                 await self.distribute_data(issue, data, 'direct_contractors')
 
-            elif queue in s.PAYMENTS_QUEUES and 'Агентские_платежи' in tags:
+            elif queue in pay_queues and 'Агентские_платежи' in tags:
                 await self.distribute_data(issue, data, 'agency_payments')
 
-            elif queue in s.PAYMENTS_QUEUES and 'Зарплата' in tags:
+            elif queue in pay_queues and 'Зарплата' in tags:
                 await self.distribute_data(issue, data, 'salaries')
 
-            elif queue in s.PAYMENTS_QUEUES and 'Бонусный_фонд' in tags:
+            elif queue in pay_queues and 'Бонусный_фонд' in tags:
                 await self.distribute_data(issue, data, 'bonus_fund')
 
-            elif queue in s.TAX_QUEUES and 'Налог_НДФЛ_/_Соцстрах' in tags:
+            elif queue in tax_queues and 'Налог_НДФЛ_/_Соцстрах' in tags:
                 await self.distribute_data(issue, data, 'tax_ndfl')
 
-            elif queue in s.TAX_QUEUES and 'Налог_НДС' in tags:
+            elif queue in tax_queues and 'Налог_НДС' in tags:
                 await self.distribute_data(issue, data, 'tax_nds')
 
-            elif queue in s.TAX_QUEUES and 'Налог_на_прибыль' in tags:
+            elif queue in tax_queues and 'Налог_на_прибыль' in tags:
                 await self.distribute_data(issue, data, 'tax_income')
 
-            elif queue in s.PAYMENTS_QUEUES and 'Пени_по_налогам' in tags:
+            elif queue in pay_queues and 'Пени_по_налогам' in tags:
                 await self.distribute_data(issue, data, 'tax_penalties')
 
-            elif queue in s.PAYMENTS_QUEUES and 'Услуги_УК' in tags:
+            elif queue in pay_queues and 'Услуги_УК' in tags:
                 await self.distribute_data(issue, data, 'management_company')
 
-            elif queue in s.PAYMENTS_QUEUES and 'Прочие_расходы' in tags:
+            elif queue in pay_queues and 'Прочие_расходы' in tags:
                 await self.distribute_data(issue, data, 'other_expenses')
 
-            elif (
-                queue in s.PAYMENTS_QUEUES
-                and 'Судебные_взыскания_\_Штрафы' in tags
-            ):
+            elif queue in pay_queues and 'Судебные_взыскания_\_Штрафы' in tags:
                 await self.distribute_data(issue, data, 'judicial_penalties')
 
-            elif queue in s.PAYMENTS_QUEUES and 'Старые_подрядчики' in tags:
+            elif queue in pay_queues and 'Старые_подрядчики' in tags:
                 await self.distribute_data(issue, data, 'old_contractors')
 
-            elif queue in s.PAYMENTS_QUEUES and 'Займы_акционеров' in tags:
+            elif queue in pay_queues and 'Займы_акционеров' in tags:
                 await self.distribute_data(issue, data, 'loans_shareholders')
 
-            elif queue in s.PAYMENTS_QUEUES and 'Проценты_по_займам' in tags:
+            elif queue in pay_queues and 'Проценты_по_займам' in tags:
                 await self.distribute_data(issue, data, 'interest_on_loans')
 
         return data
@@ -78,8 +90,15 @@ class DdsPlanTable(BdrPlanTable):
         # Все задачи
         all_issues = await tracker_api.get_list_issues()
 
+        # Объект компании из БД
+        company = await Company.get(login=os.getenv('COMPANY_LOGIN'))
+
         # Допустимые очереди
-        queues = s.RECEIPTS_QUEUES + s.PAYMENTS_QUEUES + s.TAX_QUEUES
+        queues = (
+            company.receipts_queues
+            + company.payments_queues
+            + company.tax_queues
+        )
 
         filter_ = {
             'issue.queue.key': queues,
@@ -104,8 +123,15 @@ class DdsFactTable(DdsPlanTable):
         # Все задачи
         all_issues = await tracker_api.get_list_issues()
 
+        # Объект компании из БД
+        company = await Company.get(login=os.getenv('COMPANY_LOGIN'))
+
         # Допустимые очереди
-        queues = s.RECEIPTS_QUEUES + s.PAYMENTS_QUEUES + s.TAX_QUEUES
+        queues = (
+            company.receipts_queues
+            + company.payments_queues
+            + company.tax_queues
+        )
 
         filter_ = {
             'issue.queue.key': queues,
@@ -140,6 +166,13 @@ class DdsByProjectsPlan(Tables):
     async def split_issues_by_projects(self, issues, is_plan=True):
         """ Распределить данные из задач по проектам. """
         data = {}
+        # Объект компании из БД
+        company = await Company.get(login=os.getenv('COMPANY_LOGIN'))
+
+        # Допустимые очереди
+        rec_queues = company.receipts_queues
+        pay_queues = company.payments_queues
+        tax_queues = company.tax_queues
 
         for issue in issues:
 
@@ -157,9 +190,9 @@ class DdsByProjectsPlan(Tables):
                 continue
 
             # Принадлежность задачи к той или иной очереди
-            inc_issue = issue if queue in s.RECEIPTS_QUEUES and summa else None
+            inc_issue = issue if queue in rec_queues and summa else None
 
-            exp_queues = s.TAX_QUEUES + s.PAYMENTS_QUEUES
+            exp_queues = pay_queues + tax_queues
             exp_issue = issue if queue in exp_queues and summa else None
 
             # Распределение данных за O(n)

@@ -3,6 +3,7 @@ import json
 from ..utils import Tables
 from app.utils import tracker_api
 from app.settings import log
+from app.api_auth.models import Company
 
 
 class CommonWorkingTimePlanTable(Tables):
@@ -16,7 +17,7 @@ class CommonWorkingTimePlanTable(Tables):
         if not issues:
             log.error('Задачи не получены')
 
-        # data -> Общие данные data_links -> {Имя сотрудника: ключи задач}
+        # data -> Общие данные; data_links -> {Имя сотрудника: ключи задач}
         data = {}
         data_links = {}
 

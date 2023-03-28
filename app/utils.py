@@ -1,10 +1,20 @@
+import os
+import asyncio
+
 from copy import copy, deepcopy
 from threading import Thread
 from time import sleep
 from datetime import datetime as dt
 
+from dotenv import load_dotenv
+
 from .settings import log
 from .settings import settings
+from app.api_auth.models import Company
+
+
+# Подгрузить данные из .env
+load_dotenv()
 
 
 class TrackerApi:
@@ -32,7 +42,7 @@ class TrackerApi:
             "12": 168,
         }
 
-    def get_all_issues_from_tracker(self):
+    async def get_all_issues_from_tracker(self):
         """ Получить все задачи из трекера (В отдельном потоке). """
         def get_all_issues():
             """ Получить все задачи из трекера. """
@@ -54,13 +64,7 @@ class TrackerApi:
                         data.append(issue)
 
                 self.all_issues = data
-                self.__put_hour_salary_for_personal(data)
-
-                # Пауза перед получением актуального списка задач
-                pause = settings.PERIOG_GET_TASKS_SEC
-
-                log.info(f'Задачи получены. пауза {pause} сек.')
-                sleep(pause)
+                asyncio.run(self.__put_hour_salary_for_personal(data))
 
         # Запустить получение задач в отдельном потоке
         thread = Thread(target=get_all_issues)
@@ -74,7 +78,7 @@ class TrackerApi:
 
         return deepcopy(self.hour_salary_for_personal)
 
-    def __put_hour_salary_for_personal(self, issues: list) -> None:
+    async def __put_hour_salary_for_personal(self, issues: list) -> None:
         """ Из всех задач вычислить часовую зарплату для персонала. """
         if not issues:
             log.critical('Для вычисления часовой ставки нет задач.')
@@ -83,14 +87,18 @@ class TrackerApi:
 
         pre_hour_salary_for_personal = {}
 
+        company = await Company.get(login=os.getenv('COMPANY_LOGIN'))
+        staff_queues = company.staff_salary_queues
+
         for issue in issues:
 
             if (
-                issue.queue.key in settings.STAFF_SALARY_QUEUES
+                issue.queue.key in staff_queues
                 and issue.assignee
                 and issue.end
                 and issue.summaEtapa
             ):
+
                 if issue.end.split("-")[0] != str(dt.now().year):
                     continue
 
@@ -110,6 +118,12 @@ class TrackerApi:
                     }
 
         self.hour_salary_for_personal = pre_hour_salary_for_personal
+
+        # Пауза перед получением актуального списка задач
+        pause = company.period_get_tasks_sec
+
+        log.info(f'Задачи получены. пауза {pause} сек.')
+        sleep(pause)
 
     async def get_list_issues(self):
         """ Получить готовый список задач из класса. """

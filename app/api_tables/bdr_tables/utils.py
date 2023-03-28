@@ -1,8 +1,15 @@
+import os
+
+from dotenv import load_dotenv
+
+from app.api_auth.models import Company
 from app.settings import log
-from app.settings import settings as s
 from app.utils import tracker_api
 from ..utils import Tables
 from .schemas import BdrCommon
+
+# Подгрузить данные из .env
+load_dotenv()
 
 
 class BdrPlanTable(Tables):
@@ -16,38 +23,44 @@ class BdrPlanTable(Tables):
         # Шаблон данных из схемы
         data = BdrCommon().dict()
 
+        # Объект компании из БД
+        company = await Company.get(login=os.getenv('COMPANY_LOGIN'))
+        inc_queues = company.incomes_queues
+        exp_queues = company.expenses_queues
+        salary_queues = company.staff_salary_queues
+
         for issue in issues:
             queue = issue.queue.key
             stata_b = issue.stataBudzeta
             tags = issue.tags
 
             # Распределение данных по соответствующим ключам в data
-            if queue in s.INCOMES_QUEUES:
+            if queue in inc_queues:
                 await self.distribute_data(
                     issue, data, 'incomes',
                 )
 
-            elif queue in s.EXPENSES_QUEUES and 'Прямые подрядчики' in stata_b:
+            elif queue in exp_queues and 'Прямые подрядчики' in stata_b:
                 await self.distribute_data(
                     issue, data, 'direct_contractors',
                 )
 
-            elif queue in s.STAFF_SALARY_QUEUES and 'ПП' in tags:
+            elif queue in salary_queues and 'ПП' in tags:
                 await self.distribute_data(
                     issue, data, 'fot_pp',
                 )
 
-            elif queue in s.STAFF_SALARY_QUEUES and 'АУП' in tags:
+            elif queue in salary_queues and 'АУП' in tags:
                 await self.distribute_data(
                     issue, data, 'fot_aup',
                 )
 
-            elif queue in s.EXPENSES_QUEUES and 'Прочие расходы' in stata_b:
+            elif queue in exp_queues and 'Прочие расходы' in stata_b:
                 await self.distribute_data(
                     issue, data, 'other_expenses',
                 )
 
-            elif queue in s.EXPENSES_QUEUES and 'Услуги УК' in stata_b:
+            elif queue in exp_queues and 'Услуги УК' in stata_b:
                 await self.distribute_data(
                     issue, data, 'management_company',
                 )
@@ -59,8 +72,15 @@ class BdrPlanTable(Tables):
         # Все очереди
         all_issues = await tracker_api.get_list_issues()
 
+        # Объект компании из БД
+        company = await Company.get(login=os.getenv('COMPANY_LOGIN'))
+
         # Список допустимых очередей
-        queues = s.INCOMES_QUEUES + s.EXPENSES_QUEUES + s.STAFF_SALARY_QUEUES
+        queues = (
+            company.incomes_queues
+            + company.expenses_queues
+            + company.staff_salary_queues
+        )
 
         filter_ = {
             'issue.queue.key': queues,
@@ -138,8 +158,15 @@ class BdrFactTable(BdrPlanTable):
         # Все задачи
         all_issues = await tracker_api.get_list_issues()
 
-        # Допустимые очереди
-        queues = s.INCOMES_QUEUES + s.EXPENSES_QUEUES + s.STAFF_SALARY_QUEUES
+        # Объект компании из БД
+        company = await Company.get(login=os.getenv('COMPANY_LOGIN'))
+
+        # Список допустимых очередей
+        queues = (
+            company.incomes_queues
+            + company.expenses_queues
+            + company.staff_salary_queues
+        )
 
         filter_ = {
             'issue.queue.key': queues,
@@ -171,32 +198,18 @@ class BdrByProjectsPlan(Tables):
 
         return await self.split_issues_by_projects(issues, is_plan=is_plan)
 
-    async def get_issues(self):
-        """ Получить все нужные задачи. """
-        # Все задачи
-        all_issues = await tracker_api.get_list_issues()
-
-        # Допустимые очереди
-        queues = s.INCOMES_QUEUES + s.EXPENSES_QUEUES + s.TEAMS_QUEUES
-
-        filter_ = {
-            'issue.queue.key': queues,
-            'bool(issue.project)': True,
-            'bool(issue.queue)': True,
-        }
-
-        # Из общего списка задач фильтровать нужные
-        issues = await self.get_target_issues(all_issues, filter_)
-
-        if not issues:
-            log.error('Задачи не были получены после фильтрации.')
-
-        return issues
-
     async def split_issues_by_projects(self, issues, is_plan=True):
         """ Распределить данные из задач по проектам. """
         data = {}
         pesronal_salaryes = await tracker_api.get_personal_salaryes()
+
+        # Объект компании из БД
+        company = await Company.get(login=os.getenv('COMPANY_LOGIN'))
+
+        # Список допустимых очередей
+        inc_queues = company.incomes_queues
+        exp_queues = company.expenses_queues
+        team_queues = company.team_queues
 
         for issue in issues:
 
@@ -215,22 +228,23 @@ class BdrByProjectsPlan(Tables):
             inc_issue = None
             exp_issue = None
             staff_issue = None
+
             try:
-                if queue in s.INCOMES_QUEUES and summa:
+                if queue in inc_queues and summa:
                     m = await self.get_target_month(
                         issue, 'end' if is_plan else 'deadline'
                     )
                     full_month = await self.convert_num_month_to_str_month(m)
                     inc_issue = issue
 
-                elif queue in s.EXPENSES_QUEUES and summa:
+                elif queue in exp_queues and summa:
                     m = await self.get_target_month(
                         issue, 'end' if is_plan else 'deadline'
                     )
                     full_month = await self.convert_num_month_to_str_month(m)
                     exp_issue = issue
 
-                elif queue in s.TEAMS_QUEUES:
+                elif queue in team_queues:
                     m = await self.get_target_month(issue)
                     full_month = await self.convert_num_month_to_str_month(m)
                     staff_issue = issue
