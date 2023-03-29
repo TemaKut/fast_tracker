@@ -12,8 +12,11 @@ load_dotenv()
 
 class Settings(BaseSettings):
     """ Общий класс настроек. (Обращение через объект класса.)"""
-    # URL подключения к БД
     DATABASE_URL = 'sqlite://app/database/database.sqlite3'
+    SECRET_KEY = os.getenv('SECRET_KEY')
+    ALGORITHM = "HS256"
+    ACCESS_TOKEN_PREFIX = 'Bearer '
+    ACCESS_TOKEN_EXPIRE_MINUTES = 10080  # 10080 = 1 Неделя
 
     @property
     def tracker_client(self):

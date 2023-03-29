@@ -4,6 +4,7 @@ from tortoise.contrib.fastapi import register_tortoise
 
 from .utils import tracker_api
 from .api_tables.router import tables_router
+from .api_auth.router import auth_router
 from .settings import settings
 from .database.on_startup import create_template_of_company
 
@@ -36,3 +37,4 @@ async def on_startup():
 
 
 app.include_router(tables_router, prefix='/api/v1')
+app.include_router(auth_router, prefix='/api/v1')

@@ -10,8 +10,16 @@ load_dotenv()
 
 async def create_template_of_company():
     """ Создать шаблон компании при старте приложения. """
-    await Company.get_or_create(
-        login=os.getenv('COMPANY_LOGIN'),
-        hashed_password=os.getenv('COMPANY_PASSWORD'),
-        email=os.getenv('COMPANY_EMAIL'),
-    )
+    password = os.getenv('COMPANY_PASSWORD')
+    login = os.getenv('COMPANY_LOGIN')
+    email = os.getenv('COMPANY_EMAIL')
+
+    env_company = await Company.get_or_none(login=login, email=email)
+
+    if not env_company:
+
+        await Company.get_or_create(
+            login=login,
+            password=password,
+            email=email,
+        )

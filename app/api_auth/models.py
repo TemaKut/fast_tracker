@@ -1,6 +1,9 @@
 from tortoise import models
+from tortoise.validators import MinLengthValidator, MinValueValidator
 from tortoise import fields as f
 from tortoise.contrib.pydantic import pydantic_model_creator
+
+
 
 
 class Company(models.Model):
@@ -15,10 +18,12 @@ class Company(models.Model):
         max_length=50,
         unique=True,
         description='Логин компании (Для авторизации)',
+        validators=[MinLengthValidator(2)],
     )
-    hashed_password = f.CharField(
+    password = f.CharField(
         max_length=1000,
         description='Хэш пароля. (Для авторизации)',
+        validators=[MinLengthValidator(6)],
     )
     email = f.CharField(
         max_length=50,
@@ -28,6 +33,7 @@ class Company(models.Model):
     period_get_tasks_sec = f.IntField(
         default=120,
         description='Время обновления задач компании из Y.T.',
+        validators=[MinValueValidator(29)],
     )
     incomes_queues = f.JSONField(
         default='["FINVYRUCKA"]',
@@ -68,5 +74,19 @@ class Company(models.Model):
         description='Список очередей с рабочими задачами сотрудников.',
     )
 
+    async def save(self, *args, **kwargs) -> None:
+        """ Переопределение метода save. """
+        from .jwt import get_password_hash
 
-CompanySchema = pydantic_model_creator(Company)
+        self.password = get_password_hash(self.password)
+
+        await super().save(*args, **kwargs)
+
+
+CompanyAllSchema = pydantic_model_creator(Company, name='Полная схема')
+
+CompanyForTokenSchema = pydantic_model_creator(
+    Company,
+    include=('login', 'password'),
+    name='Определённые поля для получения токена'
+)

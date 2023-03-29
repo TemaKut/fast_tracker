@@ -220,7 +220,6 @@ class BdrByProjectsPlan(Tables):
                 summary = issue.summary
                 summa = issue.summaEtapa  # Допускается None (Для сотрудников)
                 staff = issue.assignee.display
-
             except AttributeError:
                 continue
 
@@ -245,6 +244,7 @@ class BdrByProjectsPlan(Tables):
                     exp_issue = issue
 
                 elif queue in team_queues:
+                    self.is_start_and_end_within_one_month(issue)
                     m = await self.get_target_month(issue)
                     full_month = await self.convert_num_month_to_str_month(m)
                     staff_issue = issue

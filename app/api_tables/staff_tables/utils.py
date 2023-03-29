@@ -193,22 +193,20 @@ class WorkingTimeByProjectsTable(Tables):
                         d_m_s_p['hours'] += hours
                         d_m_s_p['percent'] += percent
 
-                        d_m_s['amount_hours'] += hours
-                        d_m_s['amount_percent'] += percent
+                        d_m_s['amount_values']['hours'] += hours
+                        d_m_s['amount_values']['percent'] += percent
 
                     # Если проекта нет
                     else:
                         d_m_s[project] = hours_percent
-
-                        d_m_s['amount_hours'] += hours
-                        d_m_s['amount_percent'] += percent
+                        d_m_s['amount_values']['hours'] += hours
+                        d_m_s['amount_values']['percent'] += percent
 
                 # Если сотрудника нет
                 else:
                     d_m[staff] = {
                         project: hours_percent,
-                        'amount_hours': hours,
-                        'amount_percent': percent,
+                        'amount_values': {'hours': hours, 'percent': percent},
                     }
 
             # Если в данных нет соответствующего месяца
@@ -216,8 +214,7 @@ class WorkingTimeByProjectsTable(Tables):
                 data[full_month] = {
                     staff: {
                         project: hours_percent,
-                        'amount_hours': hours,
-                        'amount_percent': percent,
+                        'amount_values': {'hours': hours, 'percent': percent},
                     }
                 }
 
