@@ -1,7 +1,9 @@
 from datetime import datetime
 
-from fastapi import APIRouter
+from fastapi import APIRouter  # Depends
 
+# from app.api_auth.bad_responses import AuthExceptions
+# from ..permissions import is_company_authorized_permission
 from .schemas import BdrCommon, Project
 from .utils import (
     BdrPlanTable, BdrFactTable, BdrByProjectsPlan, BdrByProjectsFact
@@ -10,11 +12,18 @@ from .utils import (
 
 bdr_router = APIRouter(
     prefix='/bdr',
-    tags=['Таблицы БДР']
+    tags=['Таблицы БДР'],
+    # dependencies=[Depends(is_company_authorized_permission)],
+    # responses={
+    #     401: AuthExceptions.ANAUTHORIZED.value,
+    # },
 )
 
 
-@bdr_router.get('/common/plan', response_model=BdrCommon)
+@bdr_router.get(
+    '/common/plan',
+    response_model=BdrCommon,
+)
 async def bdr_plan(year: int = datetime.now().year):
     """ Эндпоинт таблицы БДР (План) """
     table = BdrPlanTable(year)

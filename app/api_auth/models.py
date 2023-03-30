@@ -4,8 +4,6 @@ from tortoise import fields as f
 from tortoise.contrib.pydantic import pydantic_model_creator
 
 
-
-
 class Company(models.Model):
     """ Модель пользователя. """
 

@@ -73,8 +73,12 @@ async def get_access_token(company: Company, body: Body) -> dict:
     token = encode_data_to_access_token(
         data={'data': company.dict(), 'exp': expire}
     )
+    data = {
+        'access_token': token,
+        'token_type': sett.ACCESS_TOKEN_PREFIX,
+    }
 
-    return token
+    return data
 
 
 async def get_current_company(request: Request) -> dict:
@@ -87,7 +91,7 @@ async def get_current_company(request: Request) -> dict:
 
     try:
         token = request.headers.get('authorization')
-        token = token.split(sett.ACCESS_TOKEN_PREFIX)[1]
+        token = token.split(' ')[1]
 
         data = decode_access_jwt_token_to_data(token)
 
@@ -98,7 +102,7 @@ async def get_current_company(request: Request) -> dict:
     db_company = await Company.get_or_none(login=data.get('login'))
 
     if not db_company:
-        log.critical(f'Токен не связан с компанией.')
+        log.critical('Токен не связан с компанией.')
         raise credentials_exception
 
     return data

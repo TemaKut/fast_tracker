@@ -1,7 +1,9 @@
 from datetime import datetime
 
-from fastapi import APIRouter
+from fastapi import APIRouter  # Depends
 
+# from app.api_auth.bad_responses import AuthExceptions
+# from ..permissions import is_company_authorized_permission
 from .utils import (
     CommonWorkingTimePlanTable, CommonWorkingTimeFactTable,
     WorkingTimeByProjectsTable, WorkingTimeByProjectsFactTable,
@@ -11,7 +13,11 @@ from .schemas import WorkingTime, WorkingTimeByMonthAndProjects
 
 staff_router = APIRouter(
     prefix='/staff',
-    tags=['Таблицы учёта рабочего времени']
+    tags=['Таблицы учёта рабочего времени'],
+    # dependencies=[Depends(is_company_authorized_permission)],
+    # responses={
+    #     401: AuthExceptions.ANAUTHORIZED.value,
+    # },
 )
 
 

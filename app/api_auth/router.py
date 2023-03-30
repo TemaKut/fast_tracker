@@ -24,7 +24,12 @@ async def get_token(body: CompanyForTokenSchema = Body()):
     return token
 
 
-@auth_router.get('/my_company')
+@auth_router.get(
+    '/my_company',
+    responses={
+        401: AuthExceptions.ANAUTHORIZED.value,
+    },
+)
 async def get_info_about_company(
     company=Depends(get_current_company),
 ):

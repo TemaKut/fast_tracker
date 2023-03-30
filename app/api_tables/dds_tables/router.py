@@ -1,7 +1,9 @@
 from datetime import datetime
 
-from fastapi import APIRouter
+from fastapi import APIRouter  # Depends
 
+# from app.api_auth.bad_responses import AuthExceptions
+# from ..permissions import is_company_authorized_permission
 from .schemas import DdsCommon, Project
 from .utils import (
     DdsPlanTable, DdsFactTable, DdsByProjectsPlan, DdsByProjectsFact,
@@ -10,7 +12,11 @@ from .utils import (
 
 dds_router = APIRouter(
     prefix='/dds',
-    tags=['Таблицы ДДС']
+    tags=['Таблицы ДДС'],
+    # dependencies=[Depends(is_company_authorized_permission)],
+    # responses={
+    #     401: AuthExceptions.ANAUTHORIZED.value,
+    # },
 )
 
 
