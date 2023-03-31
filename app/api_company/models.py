@@ -2,6 +2,10 @@ from tortoise import models
 from tortoise.validators import MinLengthValidator, MinValueValidator
 from tortoise import fields as f
 from tortoise.contrib.pydantic import pydantic_model_creator
+from passlib.context import CryptContext
+
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class Company(models.Model):
@@ -71,17 +75,20 @@ class Company(models.Model):
         description='Список очередей с рабочими задачами сотрудников.',
     )
 
+    def verify_password(self, password: str) -> bool:
+        """ Верифицировать пароль. """
+
+        return pwd_context.verify(password, self.password)
+
     async def save(self, *args, **kwargs) -> None:
         """ Переопределение метода save. """
-        from .jwt import get_password_hash
-
-        self.password = get_password_hash(self.password)
+        self.password = pwd_context.hash(self.password)
 
         await super().save(*args, **kwargs)
 
 
+# Описание схем pydantic
 CompanyAllSchema = pydantic_model_creator(Company, name='Полная схема')
-
 CompanyForTokenSchema = pydantic_model_creator(
     Company,
     include=('login', 'password'),

@@ -1,30 +1,16 @@
 from datetime import timedelta, datetime
 
 from fastapi import Body, HTTPException, status
-from passlib.context import CryptContext
 from jose import jwt
 
 from app.api_company.models import Company, CompanyAllSchema
 from app.settings import settings as sett
 
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
-def verify_password(plain_password, hashed_password):
-    """ Верифицировать пароль с паролем в БД. """
-    return pwd_context.verify(plain_password, hashed_password)
-
-
-def get_password_hash(password):
-    """ Получить хэш пароля (Обязательно при занесении в БД) """
-
-    return pwd_context.hash(password)
-
-
-def authenticate_company(company: Company, request_body: Body) -> Company:
+async def authenticate_company(company: Company, request_body) -> Company:
     """ Подтверждение того что переданные данные компании валидны. """
-    if not verify_password(request_body.password, company.password):
+    company_db = await Company.get(login=company.login)
+    if not company_db.verify_password(request_body.password):
 
         return False
 
@@ -60,7 +46,7 @@ async def get_access_token(company: Company, body: Body) -> dict:
         )
 
     # Сравнение пароля в БД с представленным в теле запроса
-    if not authenticate_company(company, body):
+    if not await authenticate_company(company, body):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Invalid password',

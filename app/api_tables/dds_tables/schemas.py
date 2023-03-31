@@ -27,3 +27,4 @@ class Project(BaseModel):
     """ Схема структуры проекта для таблиц по проектам. """
     incomes: dict[str, DataPerYear] | None = None
     expenses: dict[str, DataPerYear] | None = None
+    amounts: dict[str, int] | None = None

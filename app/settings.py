@@ -18,7 +18,6 @@ class Settings(BaseSettings):
     ALGORITHM = "HS256"
     ACCESS_TOKEN_PREFIX = 'Bearer'
     ACCESS_TOKEN_EXPIRE_MINUTES = 10080  # 10080 = 1 Неделя
-
     APPS_MODELS = [
         'app.api_company.models',
     ]

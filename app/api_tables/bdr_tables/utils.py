@@ -33,6 +33,12 @@ class BdrPlanTable(Tables):
             queue = issue.queue.key
             stata_b = issue.stataBudzeta
             tags = issue.tags
+            month = await self.get_target_month(issue)
+            full_month = await self.convert_num_month_to_str_month(month)
+            summa_etapa = issue.summaEtapa
+
+            if not summa_etapa:
+                continue
 
             # Распределение данных по соответствующим ключам в data
             if queue in inc_queues:
@@ -64,6 +70,22 @@ class BdrPlanTable(Tables):
                 await self.distribute_data(
                     issue, data, 'management_company',
                 )
+
+            if i_bt := data.get('incomes_before_tax'):
+
+                if i_bt.get(full_month):
+                    i_bt[full_month] += summa_etapa
+                    i_bt['amount'] += summa_etapa
+
+                else:
+                    i_bt[full_month] = summa_etapa
+                    i_bt['amount'] += summa_etapa
+
+            else:
+                data['incomes_before_tax'] = {
+                    full_month: summa_etapa,
+                    'amount': summa_etapa,
+                }
 
         return data
 
@@ -230,6 +252,9 @@ class BdrByProjectsPlan(Tables):
 
             try:
                 if queue in inc_queues and summa:
+                    await self.is_issue_end_in_year(
+                        issue, self.year, 'end' if is_plan else 'deadline'
+                    )
                     m = await self.get_target_month(
                         issue, 'end' if is_plan else 'deadline'
                     )
@@ -237,6 +262,9 @@ class BdrByProjectsPlan(Tables):
                     inc_issue = issue
 
                 elif queue in exp_queues and summa:
+                    await self.is_issue_end_in_year(
+                        issue, self.year, 'end' if is_plan else 'deadline'
+                    )
                     m = await self.get_target_month(
                         issue, 'end' if is_plan else 'deadline'
                     )
@@ -244,22 +272,50 @@ class BdrByProjectsPlan(Tables):
                     exp_issue = issue
 
                 elif queue in team_queues:
-                    self.is_start_and_end_within_one_month(issue)
+                    await self.is_issue_in_target_year(issue, self.year)
+                    await self.is_start_and_end_within_one_month(issue)
                     m = await self.get_target_month(issue)
                     full_month = await self.convert_num_month_to_str_month(m)
-                    staff_issue = issue
                     dur = issue.originalEstimation if is_plan else issue.spent
+                    hours = await self.duration_to_work_hours(dur)
 
-                    if not isinstance(dur, str):
+                    salary = pesronal_salaryes.get(m).get(staff, 0)
+                    summa = hours * salary
+
+                    if hours <= 0:
                         continue
 
-                    try:
-                        salary = pesronal_salaryes.get(m).get(staff, 0)
+                    staff_issue = issue
 
-                    except AttributeError:
-                        salary = 0
+                else:
+                    continue
+
+                if not summa:
+                    continue
+
             except Exception:
                 continue
+
+            # Добавить суммы к проекту
+            if d_p := data.get(project_name):
+
+                if d_p_a := d_p.get('amounts'):
+
+                    if d_p_a.get(full_month):
+                        d_p_a[full_month] += summa
+
+                    else:
+                        d_p_a[full_month] = summa
+
+                    d_p_a['amount'] += summa
+
+                else:
+                    d_p['amounts'] = {full_month: summa, 'amount': summa}
+
+            else:
+                data[project_name] = {
+                    'amounts': {full_month: summa, 'amount': summa}
+                }
 
             # Распределение данных за O(n)
             # Если в данных есть информация о проекте
@@ -317,11 +373,6 @@ class BdrByProjectsPlan(Tables):
 
                 # Операции с сотрудниками
                 if staff_issue:
-                    hours = await self.duration_to_work_hours(dur)
-                    salary = hours * salary
-
-                    if hours <= 0:
-                        continue
 
                     if d_p_p := d_p.get('personal'):
 
@@ -329,27 +380,27 @@ class BdrByProjectsPlan(Tables):
 
                             if d_p_p_s.get(full_month):
                                 d_p_p_s[full_month]['hours'] += hours
-                                d_p_p_s[full_month]['salary'] += salary
+                                d_p_p_s[full_month]['salary'] += summa
                                 d_p_p_s['amount_hours'] += hours
-                                d_p_p_s['amount_salary'] += salary
+                                d_p_p_s['amount_salary'] += summa
 
                             else:
                                 d_p_p_s[full_month] = {
                                     'hours': hours,
-                                    'salary': salary,
+                                    'salary': summa,
                                 }
 
                                 d_p_p_s['amount_hours'] += hours
-                                d_p_p_s['amount_salary'] += salary
+                                d_p_p_s['amount_salary'] += summa
 
                         else:
                             d_p_p[staff] = {
                                 full_month: {
                                     'hours': hours,
-                                    'salary': salary,
+                                    'salary': summa,
                                 },
                                 'amount_hours': hours,
-                                'amount_salary': salary,
+                                'amount_salary': summa,
                             }
 
                     else:
@@ -357,10 +408,10 @@ class BdrByProjectsPlan(Tables):
                             staff: {
                                 full_month: {
                                     'hours': hours,
-                                    'salary': salary,
+                                    'salary': summa,
                                 },
                                 'amount_hours': hours,
-                                'amount_salary': salary,
+                                'amount_salary': summa,
                             }
                         }
 
@@ -370,29 +421,23 @@ class BdrByProjectsPlan(Tables):
                 data[project_name] = {
                     'incomes': {
                         summary: {full_month: summa, 'amount': summa},
-                    } if inc_issue else {},
+                    } if inc_issue else None,
                     'expenses': {
                         summary: {full_month: summa, 'amount': summa},
-                    } if exp_issue else {},
+                    } if exp_issue else None,
                 }
 
                 # Положить данные сотрудника в проект (Полный путь)
                 # ..Если задачу можно характеризовать как сотрудническую
                 if staff_issue:
-                    hours = await self.duration_to_work_hours(dur)
-                    salary = hours * salary
-
-                    if hours <= 0:
-                        continue
-
                     data[project_name]['personal'] = {
                         staff: {
                             full_month: {
                                 'hours': hours,
-                                'salary': salary,
+                                'salary': summa,
                             },
                             'amount_hours': hours,
-                            'amount_salary': salary,
+                            'amount_salary': summa,
                         }
                     }
 

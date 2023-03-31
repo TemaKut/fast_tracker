@@ -11,7 +11,7 @@ class CommonWorkingTimePlanTable(Tables):
     async def get_data(self, is_plan=True):
         """ Получить данные таблицы планового рабочего времени. """
         # Все подходящие задачи
-        issues = await self.get_issues_for_table()
+        issues = await tracker_api.get_list_issues()
 
         if not issues:
             log.error('Задачи не получены')
@@ -23,6 +23,11 @@ class CommonWorkingTimePlanTable(Tables):
         for issue in issues:
 
             try:
+                # Есть ли проект
+                issue.project.display
+                # Находится ли задача в рамках одного года
+                await self.is_issue_in_target_year(issue, self.year)
+
                 month = await self.get_target_month(issue)
                 full_month = await self.convert_num_month_to_str_month(month)
                 staff = issue.assignee.display
@@ -71,25 +76,6 @@ class CommonWorkingTimePlanTable(Tables):
 
         return await self.add_link_for_staff(data, data_links)
 
-    async def get_issues_for_table(self):
-        """ Получить целевые задачи. """
-        # Все задачи
-        all_issues = await tracker_api.get_list_issues()
-
-        # Из общего списка задач фильтровать нужные
-        issues = await self.get_target_issues(
-            all_issues,
-            {
-                'bool(issue.assignee.display)': True,
-                'bool(issue.project.display)': True,
-                'bool(issue.originalEstimation)': True,
-                'issue.start.split("-")[0]': str(self.year),
-                'issue.end.split("-")[0]': str(self.year),
-            },
-        )
-
-        return issues
-
     async def add_link_for_staff(self, data, data_links):
         """ Добавить к основным данным ссылки на используемые задачи. """
         prefix = 'https://tracker.yandex.ru/issues/?key='
@@ -104,25 +90,6 @@ class CommonWorkingTimePlanTable(Tables):
 
 class CommonWorkingTimeFactTable(CommonWorkingTimePlanTable):
     """ Утилиты для получения данных таблицы общего рабочего времени (Факт) """
-
-    async def get_issues_for_table(self):
-        """ Получить целевые задачи. """
-        # Все задачи
-        all_issues = await tracker_api.get_list_issues()
-
-        # Из общего списка задач фильтровать нужные
-        issues = await self.get_target_issues(
-            all_issues,
-            {
-                'bool(issue.assignee.display)': True,
-                'bool(issue.project.display)': True,
-                'bool(issue.spent)': True,
-                'issue.start.split("-")[0]': str(self.year),
-                'issue.end.split("-")[0]': str(self.year),
-            },
-        )
-
-        return issues
 
     async def get_data(self, is_plan=False):
         """ Получить данные таблицы планового рабочего времени. """

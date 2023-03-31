@@ -30,7 +30,7 @@ class BdrCommon(BaseModel):
     fot_aup: dict[str, DataPerYear] = {}
     other_expenses: dict[str, DataPerYear] = {}
     management_company: dict[str, DataPerYear] = {}
-    incomes_before_tax: dict[str, DataPerYear] = {}
+    incomes_before_tax: DataPerYear = {}
 
 
 class Project(BaseModel):
@@ -38,3 +38,4 @@ class Project(BaseModel):
     incomes: dict[str, DataPerYear] | None = None
     expenses: dict[str, DataPerYear] | None = None
     personal: dict[str, dict[str, Any]] | None = None
+    amounts: dict[str, int] | None = None

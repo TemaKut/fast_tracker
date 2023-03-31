@@ -178,6 +178,9 @@ class DdsByProjectsPlan(Tables):
 
             # Проверка наличия необходимых аттрибутов у задачи
             try:
+                await self.is_issue_end_in_year(
+                    issue, self.year, 'end' if is_plan else 'deadline'
+                )
                 project_name = issue.project.display
                 queue = issue.queue.key
                 summary = issue.summary
@@ -186,6 +189,7 @@ class DdsByProjectsPlan(Tables):
                     issue, 'end' if is_plan else 'deadline'
                 )
                 full_month = await self.convert_num_month_to_str_month(month)
+
             except Exception:
                 continue
 
@@ -196,6 +200,29 @@ class DdsByProjectsPlan(Tables):
             exp_issue = issue if queue in exp_queues and summa else None
 
             # Распределение данных за O(n)
+            # Добавление общей суммы
+            if inc_issue or exp_issue:
+
+                if d_p := data.get(project_name):
+
+                    if d_p_a := d_p.get('amounts'):
+
+                        if d_p_a.get(full_month):
+                            d_p_a[full_month] += summa
+
+                        else:
+                            d_p_a[full_month] = summa
+
+                        d_p_a['amount'] += summa
+
+                    else:
+                        d_p['amounts'] = {full_month: summa, 'amount': summa}
+
+                else:
+                    data[project_name] = {
+                        'amounts': {full_month: summa, 'amount': summa}
+                    }
+
             # Если в данных есть информация о проекте
             if d_p := data.get(project_name):
 

@@ -1,6 +1,7 @@
 from isodate import parse_duration
 
 from app.settings import log
+from .config import TABLES_CONFIG
 
 
 class Tables:
@@ -8,6 +9,7 @@ class Tables:
     def __init__(self, year: int):
         """ Инициализация класса. """
         self.year = year
+        self.config = TABLES_CONFIG.get(self.__class__.__name__)
         self.work_hours_per_month = {
             "january": 136,
             "february": 144,
@@ -114,3 +116,45 @@ class Tables:
             raise ValueError('Месяц передан неправильно.')
 
         return self.decoded_months[num_month]
+
+    async def is_issue_in_target_year(self, issue, year, target_: str = 'end'):
+        """ Возбудить исключение если задача не в рамках учётного года. """
+        if target_ not in ['end', 'deadline']:
+            log.error('target_ -> in ["end", "deadline"]')
+            raise ValueError('target_ -> in ["end", "deadline"]')
+
+        if target_ == 'end':
+            start_year = issue.start.split("-")[0]
+            end_year = issue.end.split("-")[0]
+
+            if (start_year != str(year)) or (end_year != str(year)):
+
+                raise ValueError()
+
+        else:
+            start_year = issue.start.split("-")[0]
+            deadline_year = issue.deadline.split("-")[0]
+
+            if (start_year != str(year)) or (deadline_year != str(year)):
+
+                raise ValueError()
+
+    async def is_issue_end_in_year(self, issue, year, target_: str = 'end'):
+        """ Возбудить исключение если задача не в рамках учётного года. """
+        if target_ not in ['end', 'deadline']:
+            log.error('target_ -> in ["end", "deadline"]')
+            raise ValueError('target_ -> in ["end", "deadline"]')
+
+        if target_ == 'end':
+            end_year = issue.end.split("-")[0]
+
+            if end_year != str(year):
+
+                raise ValueError()
+
+        else:
+            deadline_year = issue.deadline.split("-")[0]
+
+            if deadline_year != str(year):
+
+                raise ValueError()
