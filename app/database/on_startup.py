@@ -14,7 +14,7 @@ async def create_template_of_company():
     login = os.getenv('COMPANY_LOGIN')
     email = os.getenv('COMPANY_EMAIL')
 
-    env_company = await Company.get_or_none(login=login, email=email)
+    env_company = await Company.get_or_none(login=login)
 
     if not env_company:
 

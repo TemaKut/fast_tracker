@@ -25,7 +25,6 @@ class Company(models.Model):
     )
     email = f.CharField(
         max_length=50,
-        unique=True,
         description='Email компании (Для резервного сброса пароля)',
     )
     period_get_tasks_sec = f.IntField(
