@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Body
 
-from .models import CompanyForTokenSchema, Company
-from .jwt import get_access_token, get_current_company
+from app.api_company.models import CompanyForTokenSchema, Company
+from .jwt import get_access_token
 from .bad_responses import AuthExceptions
 
 
@@ -22,17 +22,3 @@ async def get_token(body: CompanyForTokenSchema = Body()):
     token = await get_access_token(company, body)
 
     return token
-
-
-@auth_router.get(
-    '/my_company',
-    responses={
-        401: AuthExceptions.ANAUTHORIZED.value,
-    },
-)
-async def get_info_about_company(
-    company=Depends(get_current_company),
-):
-    """ Получить информацию о текущей компании. """
-
-    return company

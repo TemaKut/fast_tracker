@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 from .settings import log
 from .settings import settings
-from app.api_auth.models import Company
+from app.api_company.models import Company
 
 
 # Подгрузить данные из .env

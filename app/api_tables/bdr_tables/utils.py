@@ -2,7 +2,7 @@ import os
 
 from dotenv import load_dotenv
 
-from app.api_auth.models import Company
+from app.api_company.models import Company
 from app.settings import log
 from app.utils import tracker_api
 from ..utils import Tables
