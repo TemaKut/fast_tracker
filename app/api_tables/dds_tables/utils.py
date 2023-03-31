@@ -246,8 +246,16 @@ class DdsByProjectsPlan(Tables):
                                 full_month: summa, 'amount': summa,
                             }
 
+                        if d_p_i['amounts'].get(full_month):
+                            d_p_i['amounts'][full_month] += summa
+                            d_p_i['amounts']['amount'] += summa
+                        else:
+                            d_p_i['amounts'][full_month] = summa
+                            d_p_i['amounts']['amount'] += summa
+
                     else:
                         d_p['incomes'] = {
+                            'amounts': {full_month: summa, 'amount': summa},
                             summary: {full_month: summa, 'amount': summa},
                         }
 
@@ -271,8 +279,16 @@ class DdsByProjectsPlan(Tables):
                                 full_month: summa, 'amount': summa,
                             }
 
+                        if d_p_i['amounts'].get(full_month):
+                            d_p_i['amounts'][full_month] += summa
+                            d_p_i['amounts']['amount'] += summa
+                        else:
+                            d_p_i['amounts'][full_month] = summa
+                            d_p_i['amounts']['amount'] += summa
+
                     else:
                         d_p['expenses'] = {
+                            'amounts': {full_month: summa, 'amount': summa},
                             summary: {full_month: summa, 'amount': summa},
                         }
 
@@ -281,9 +297,11 @@ class DdsByProjectsPlan(Tables):
                 # Положить данные доходов | расходов в проект (Полный путь)
                 data[project_name] = {
                     'incomes': {
+                        'amounts': {full_month: summa, 'amount': summa},
                         summary: {full_month: summa, 'amount': summa},
                     } if inc_issue else {},
                     'expenses': {
+                        'amounts': {full_month: summa, 'amount': summa},
                         summary: {full_month: summa, 'amount': summa},
                     } if exp_issue else {},
                 }

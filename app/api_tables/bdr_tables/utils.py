@@ -235,13 +235,11 @@ class BdrByProjectsPlan(Tables):
 
         for issue in issues:
 
-            # Проверка наличия необходимых аттрибутов у задачи
             try:
                 project_name = issue.project.display
                 queue = issue.queue.key
                 summary = issue.summary
                 summa = issue.summaEtapa  # Допускается None (Для сотрудников)
-                staff = issue.assignee.display
             except AttributeError:
                 continue
 
@@ -274,6 +272,7 @@ class BdrByProjectsPlan(Tables):
                 elif queue in team_queues:
                     await self.is_issue_in_target_year(issue, self.year)
                     await self.is_start_and_end_within_one_month(issue)
+                    staff = issue.assignee.display
                     m = await self.get_target_month(issue)
                     full_month = await self.convert_num_month_to_str_month(m)
                     dur = issue.originalEstimation if is_plan else issue.spent
@@ -341,8 +340,16 @@ class BdrByProjectsPlan(Tables):
                                 full_month: summa, 'amount': summa,
                             }
 
+                        if d_p_i['amounts'].get(full_month):
+                            d_p_i['amounts'][full_month] += summa
+                            d_p_i['amounts']['amount'] += summa
+                        else:
+                            d_p_i['amounts'][full_month] = summa
+                            d_p_i['amounts']['amount'] += summa
+
                     else:
                         d_p['incomes'] = {
+                            'amounts': {full_month: summa, 'amount': summa},
                             summary: {full_month: summa, 'amount': summa},
                         }
 
@@ -366,8 +373,16 @@ class BdrByProjectsPlan(Tables):
                                 full_month: summa, 'amount': summa,
                             }
 
+                        if d_p_i['amounts'].get(full_month):
+                            d_p_i['amounts'][full_month] += summa
+                            d_p_i['amounts']['amount'] += summa
+                        else:
+                            d_p_i['amounts'][full_month] = summa
+                            d_p_i['amounts']['amount'] += summa
+
                     else:
                         d_p['expenses'] = {
+                            'amounts': {full_month: summa, 'amount': summa},
                             summary: {full_month: summa, 'amount': summa},
                         }
 
@@ -403,8 +418,16 @@ class BdrByProjectsPlan(Tables):
                                 'amount_salary': summa,
                             }
 
+                        if d_p_p['amounts'].get(full_month):
+                            d_p_p['amounts'][full_month] += summa
+                            d_p_p['amounts']['amount'] += summa
+                        else:
+                            d_p_p['amounts'][full_month] = summa
+                            d_p_p['amounts']['amount'] += summa
+
                     else:
                         d_p['personal'] = {
+                            'amounts': {full_month: summa, 'amount': summa},
                             staff: {
                                 full_month: {
                                     'hours': hours,
@@ -420,9 +443,11 @@ class BdrByProjectsPlan(Tables):
                 # Положить данные доходов | расходов в проект (Полный путь)
                 data[project_name] = {
                     'incomes': {
+                        'amounts': {full_month: summa, 'amount': summa},
                         summary: {full_month: summa, 'amount': summa},
                     } if inc_issue else None,
                     'expenses': {
+                        'amounts': {full_month: summa, 'amount': summa},
                         summary: {full_month: summa, 'amount': summa},
                     } if exp_issue else None,
                 }
@@ -431,6 +456,7 @@ class BdrByProjectsPlan(Tables):
                 # ..Если задачу можно характеризовать как сотрудническую
                 if staff_issue:
                     data[project_name]['personal'] = {
+                        'amounts': {full_month: summa, 'amount': summa},
                         staff: {
                             full_month: {
                                 'hours': hours,
