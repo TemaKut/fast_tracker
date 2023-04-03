@@ -24,8 +24,11 @@ bdr_router = APIRouter(
     '/common/plan',
     response_model=BdrCommon,
 )
-async def bdr_plan(year: int = datetime.now().year):
+async def bdr_plan(year: int = None):
     """ Эндпоинт таблицы БДР (План) """
+    if not year:
+        year = datetime.now().year
+
     table = BdrPlanTable(year)
     result = await table.get_data()
 
@@ -33,8 +36,11 @@ async def bdr_plan(year: int = datetime.now().year):
 
 
 @bdr_router.get('/common/fact', response_model=BdrCommon)
-async def bdr_fact(year: int = datetime.now().year):
+async def bdr_fact(year: int = None):
     """ Эндпоинт таблицы БДР (Факт) """
+    if not year:
+        year = datetime.now().year
+
     table = BdrFactTable(year)
     result = await table.get_data()
 
@@ -42,8 +48,11 @@ async def bdr_fact(year: int = datetime.now().year):
 
 
 @bdr_router.get('/by-projects/plan', response_model=dict[str, Project])
-async def bdr_by_projects_plan(year: int = datetime.now().year):
+async def bdr_by_projects_plan(year: int = None):
     """ Эндпоинт таблицы БДР по проектам (План). """
+    if not year:
+        year = datetime.now().year
+
     table = BdrByProjectsPlan(year)
     result = await table.get_data()
 
@@ -51,8 +60,11 @@ async def bdr_by_projects_plan(year: int = datetime.now().year):
 
 
 @bdr_router.get('/by-projects/fact', response_model=dict[str, Project])
-async def bdr_by_projects_fact(year: int = datetime.now().year):
+async def bdr_by_projects_fact(year: int = None):
     """ Эндпоинт таблицы БДР по проектам (Факт). """
+    if not year:
+        year = datetime.now().year
+
     table = BdrByProjectsFact(year)
     result = await table.get_data(is_plan=False)
 

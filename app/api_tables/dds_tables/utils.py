@@ -80,7 +80,7 @@ class DdsPlanTable(BdrPlanTable):
             elif queue in pay_queues and 'Займы_акционеров' in tags:
                 await self.distribute_data(issue, data, 'loans_shareholders')
 
-            elif queue in pay_queues and 'Проценты_по_займам' in tags:
+            elif queue in pay_queues and 'Процент_по_займам' in tags:
                 await self.distribute_data(issue, data, 'interest_on_loans')
 
         return data

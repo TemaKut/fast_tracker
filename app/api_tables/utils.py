@@ -1,7 +1,6 @@
 from isodate import parse_duration
 
 from app.settings import log
-from .config import TABLES_CONFIG
 
 
 class Tables:
@@ -9,7 +8,6 @@ class Tables:
     def __init__(self, year: int):
         """ Инициализация класса. """
         self.year = year
-        self.config = TABLES_CONFIG.get(self.__class__.__name__)
         self.work_hours_per_month = {
             "january": 136,
             "february": 144,

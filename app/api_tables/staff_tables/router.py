@@ -22,8 +22,11 @@ staff_router = APIRouter(
 
 
 @staff_router.get('/common/plan', response_model=list[WorkingTime])
-async def common_plan_table(year: int = datetime.now().year):
+async def common_plan_table(year: int = None):
     """ Эндпоинт таблицы общ. рабочего времени (План). """
+    if not year:
+        year = datetime.now().year
+
     table = CommonWorkingTimePlanTable(year=year)
     table_data = await table.get_data()
 
@@ -31,8 +34,11 @@ async def common_plan_table(year: int = datetime.now().year):
 
 
 @staff_router.get('/common/fact', response_model=list[WorkingTime])
-async def common_fact_table(year: int = datetime.now().year):
+async def common_fact_table(year: int = None):
     """ Эндпоинт таблицы общ. рабочего времени (Факт). """
+    if not year:
+        year = datetime.now().year
+
     table = CommonWorkingTimeFactTable(year=year)
     table_data = await table.get_data()
 
@@ -43,8 +49,11 @@ async def common_fact_table(year: int = datetime.now().year):
     '/by-projects/plan',
     response_model=WorkingTimeByMonthAndProjects,
 )
-async def by_projects_plan(year: int = datetime.now().year):
+async def by_projects_plan(year: int = None):
     """ Эндпоинт таблицы планового рабочего времени по проектам """
+    if not year:
+        year = datetime.now().year
+
     table = WorkingTimeByProjectsTable(year=year)
     table_data = await table.get_data()
 
@@ -55,8 +64,11 @@ async def by_projects_plan(year: int = datetime.now().year):
     '/by-projects/fact',
     response_model=WorkingTimeByMonthAndProjects,
 )
-async def by_projects_fact(year: int = datetime.now().year):
+async def by_projects_fact(year: int = None):
     """ Эндпоинт таблицы планового рабочего времени по проектам """
+    if not year:
+        year = datetime.now().year
+
     table = WorkingTimeByProjectsFactTable(year=year)
     table_data = await table.get_data()
 

@@ -21,8 +21,11 @@ dds_router = APIRouter(
 
 
 @dds_router.get('/common/plan', response_model=DdsCommon)
-async def dds_plan(year: int = datetime.now().year):
+async def dds_plan(year: int = None):
     """ Эндпоинт таблицы ДДС (План) """
+    if not year:
+        year = datetime.now().year
+
     table = DdsPlanTable(year)
     result = await table.get_data()
 
@@ -30,8 +33,11 @@ async def dds_plan(year: int = datetime.now().year):
 
 
 @dds_router.get('/common/fact', response_model=DdsCommon)
-async def dds_fact(year: int = datetime.now().year):
+async def dds_fact(year: int = None):
     """ Эндпоинт таблицы ДДС (Факт) """
+    if not year:
+        year = datetime.now().year
+
     table = DdsFactTable(year)
     result = await table.get_data()
 
@@ -39,8 +45,11 @@ async def dds_fact(year: int = datetime.now().year):
 
 
 @dds_router.get('/by-projects/plan', response_model=dict[str, Project])
-async def dds_by_projects_plan(year: int = datetime.now().year):
+async def dds_by_projects_plan(year: int = None):
     """ Эндпоинт таблицы ДДС (План) """
+    if not year:
+        year = datetime.now().year
+
     table = DdsByProjectsPlan(year)
     result = await table.get_data()
 
@@ -48,8 +57,11 @@ async def dds_by_projects_plan(year: int = datetime.now().year):
 
 
 @dds_router.get('/by-projects/fact', response_model=dict[str, Project])
-async def dds_by_projects_fact(year: int = datetime.now().year):
+async def dds_by_projects_fact(year: int = None):
     """ Эндпоинт таблицы ДДС (Факт) """
+    if not year:
+        year = datetime.now().year
+
     table = DdsByProjectsFact(year)
     result = await table.get_data()
 
