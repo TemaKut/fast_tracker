@@ -1,13 +1,11 @@
 from datetime import datetime
+from time import perf_counter
 
 from fastapi import APIRouter  # Depends
 
 # from app.api_auth.bad_responses import AuthExceptions
 # from ..permissions import is_company_authorized_permission
-from .utils import (
-    CommonWorkingTimePlanTable, CommonWorkingTimeFactTable,
-    WorkingTimeByProjectsTable, WorkingTimeByProjectsFactTable,
-)
+from .utils import CommonWorkingTimeTable, WorkingTimeByProjectsTable
 from .schemas import WorkingTime, WorkingTimeByMonthAndProjects
 
 
@@ -27,7 +25,7 @@ async def common_plan_table(year: int = None):
     if not year:
         year = datetime.now().year
 
-    table = CommonWorkingTimePlanTable(year=year)
+    table = CommonWorkingTimeTable(year=year)
     table_data = await table.get_data()
 
     return table_data
@@ -39,8 +37,8 @@ async def common_fact_table(year: int = None):
     if not year:
         year = datetime.now().year
 
-    table = CommonWorkingTimeFactTable(year=year)
-    table_data = await table.get_data()
+    table = CommonWorkingTimeTable(year=year)
+    table_data = await table.get_data(is_plan=False)
 
     return table_data
 
@@ -69,7 +67,7 @@ async def by_projects_fact(year: int = None):
     if not year:
         year = datetime.now().year
 
-    table = WorkingTimeByProjectsFactTable(year=year)
-    table_data = await table.get_data()
+    table = WorkingTimeByProjectsTable(year=year)
+    table_data = await table.get_data(is_plan=False)
 
     return WorkingTimeByMonthAndProjects(**table_data)

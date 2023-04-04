@@ -37,6 +37,64 @@ class Tables:
             '12': 'december',
         }
 
+    async def distribute_data(self, issue, full_month, data, key) -> None:
+        """
+        Метод распределения данных из задачи по объекту словаря.
+        Метод получает объект словаря и изменяет его, ничего не возвращая.
+        """
+        name = issue.summary
+        summa_etapa = issue.summaEtapa
+
+        # Распределение данных О(n)
+        # Если в data.get(key) уже есть name
+        if data_n := data[key].get(name):
+
+            # Если ранее записан месяц
+            if data_n.get(full_month):
+                data_n[full_month] += summa_etapa
+                data_n['amount'] += summa_etapa
+
+            # Если месяца в данных нет
+            else:
+                data_n[full_month] = summa_etapa
+                data_n['amount'] += summa_etapa
+
+        # Если в data.get(key) нет name
+        else:
+            data[key][name] = {full_month: summa_etapa, 'amount': summa_etapa}
+
+        # Распределение сумм
+        if amounts := data[key].get('amounts'):
+            if amounts.get(full_month):
+                amounts[full_month] += summa_etapa
+                amounts['amount'] += summa_etapa
+            else:
+                amounts[full_month] = summa_etapa
+                amounts['amount'] += summa_etapa
+
+        else:
+            data[key]['amounts'] = {
+                full_month: summa_etapa,
+                'amount': summa_etapa,
+            }
+
+        # Распределение доходов перед налогооблажением (общей суммы)
+        if i_bt := data.get('incomes_before_tax'):
+
+            if i_bt.get(full_month):
+                i_bt[full_month] += summa_etapa
+                i_bt['amount'] += summa_etapa
+
+            else:
+                i_bt[full_month] = summa_etapa
+                i_bt['amount'] += summa_etapa
+
+        else:
+            data['incomes_before_tax'] = {
+                full_month: summa_etapa,
+                'amount': summa_etapa,
+            }
+
     async def get_target_issues(self, issues: list, filter_: dict) -> list:
         """
         Получить целевые задачи из списка.
@@ -83,7 +141,7 @@ class Tables:
 
     async def duration_to_work_hours(self, duration: str) -> int:
         """ Преобразование промежутка времени в рабочие часы. """
-        if not isinstance(duration, str):
+        if not isinstance(duration, str | None):
             log.critical('Переменная duration не str.')
             raise ValueError('duration должно быть строкой.')
 

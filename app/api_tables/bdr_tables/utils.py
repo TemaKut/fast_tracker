@@ -3,7 +3,6 @@ import os
 from dotenv import load_dotenv
 
 from app.api_company.models import Company
-from app.settings import log
 from app.utils import tracker_api
 from ..utils import Tables
 from .schemas import BdrCommon
@@ -12,13 +11,13 @@ from .schemas import BdrCommon
 load_dotenv()
 
 
-class BdrPlanTable(Tables):
+class BdrTable(Tables):
     """ Утилиты таблицы БДР (План). """
 
-    async def get_data(self):
+    async def get_data(self, is_plan=True):
         """ Получить данные таблицы. """
         # Все подходящие задачи
-        issues = await self.get_issues()
+        issues = await tracker_api.get_list_issues()
 
         # Шаблон данных из схемы
         data = BdrCommon().dict()
@@ -30,12 +29,20 @@ class BdrPlanTable(Tables):
         salary_queues = company.staff_salary_queues
 
         for issue in issues:
-            queue = issue.queue.key
-            stata_b = issue.stataBudzeta
-            tags = issue.tags
-            month = await self.get_target_month(issue)
-            full_month = await self.convert_num_month_to_str_month(month)
-            summa_etapa = issue.summaEtapa
+            try:
+                await self.is_issue_end_in_year(
+                    issue, self.year, 'end' if is_plan else 'deadline')
+                queue = issue.queue.key
+                stata_b = issue.stataBudzeta
+                tags = issue.tags
+                month = await self.get_target_month(
+                    issue, 'end' if is_plan else 'deadline'
+                )
+                full_month = await self.convert_num_month_to_str_month(month)
+                summa_etapa = issue.summaEtapa
+
+            except Exception:
+                continue
 
             if not summa_etapa:
                 continue
@@ -43,174 +50,38 @@ class BdrPlanTable(Tables):
             # Распределение данных по соответствующим ключам в data
             if queue in inc_queues:
                 await self.distribute_data(
-                    issue, data, 'incomes',
+                    issue, full_month, data, 'incomes',
                 )
 
             elif queue in exp_queues and 'Прямые подрядчики' in stata_b:
                 await self.distribute_data(
-                    issue, data, 'direct_contractors',
+                    issue, full_month, data, 'direct_contractors',
                 )
 
             elif queue in salary_queues and 'ПП' in tags:
                 await self.distribute_data(
-                    issue, data, 'fot_pp',
+                    issue, full_month, data, 'fot_pp',
                 )
 
             elif queue in salary_queues and 'АУП' in tags:
                 await self.distribute_data(
-                    issue, data, 'fot_aup',
+                    issue, full_month, data, 'fot_aup',
                 )
 
             elif queue in exp_queues and 'Прочие расходы' in stata_b:
                 await self.distribute_data(
-                    issue, data, 'other_expenses',
+                    issue, full_month, data, 'other_expenses',
                 )
 
             elif queue in exp_queues and 'Услуги УК' in stata_b:
                 await self.distribute_data(
-                    issue, data, 'management_company',
+                    issue, full_month, data, 'management_company',
                 )
-
-            if i_bt := data.get('incomes_before_tax'):
-
-                if i_bt.get(full_month):
-                    i_bt[full_month] += summa_etapa
-                    i_bt['amount'] += summa_etapa
-
-                else:
-                    i_bt[full_month] = summa_etapa
-                    i_bt['amount'] += summa_etapa
-
-            else:
-                data['incomes_before_tax'] = {
-                    full_month: summa_etapa,
-                    'amount': summa_etapa,
-                }
 
         return data
 
-    async def get_issues(self):
-        """ Получить все нужные задачи. """
-        # Все очереди
-        all_issues = await tracker_api.get_list_issues()
 
-        # Объект компании из БД
-        company = await Company.get(login=os.getenv('COMPANY_LOGIN'))
-
-        # Список допустимых очередей
-        queues = (
-            company.incomes_queues
-            + company.expenses_queues
-            + company.staff_salary_queues
-        )
-
-        filter_ = {
-            'issue.queue.key': queues,
-            'issue.summaEtapa != 0': True,
-            'issue.end.split("-")[0]': str(self.year),
-        }
-
-        # Из общего списка задач фильтровать нужные
-        issues = await self.get_target_issues(all_issues, filter_)
-
-        if not issues:
-            log.error('Задачи не были получены после фильтрации.')
-
-        return issues
-
-    async def distribute_data(self, issue, data, key) -> None:
-        """
-        Метод распределения данных из задачи по объекту словаря.
-        Метод получает объект словаря и изменяет его, ничего не возвращая.
-        """
-        try:
-            data[key]
-
-        except KeyError:
-            log.critical('Такого ключа в словаре нет.')
-            raise KeyError(f'Такого ключа в словаре нет. ({key})')
-
-        month = await self.get_target_month(issue)
-        full_month = await self.convert_num_month_to_str_month(month)
-        name = issue.summary
-        summa_etapa = issue.summaEtapa
-
-        if not summa_etapa:
-            return
-
-        # Распределение данных О(n)
-        # Если в data.get(key) уже есть name
-        if data_n := data[key].get(name):
-
-            # Если ранее записан месяц
-            if data_n.get(full_month):
-                data_n[full_month] += summa_etapa
-                data_n['amount'] += summa_etapa
-
-            # Если месяца в данных нет
-            else:
-                data_n[full_month] = summa_etapa
-                data_n['amount'] += summa_etapa
-
-        # Если в data.get(key) нет name
-        else:
-            data[key][name] = {full_month: summa_etapa, 'amount': summa_etapa}
-
-        # Распределение сумм
-        if amounts := data[key].get('amounts'):
-            if amounts.get(full_month):
-                amounts[full_month] += summa_etapa
-                amounts['amount'] += summa_etapa
-            else:
-                amounts[full_month] = summa_etapa
-                amounts['amount'] += summa_etapa
-
-        else:
-            data[key]['amounts'] = {
-                full_month: summa_etapa,
-                'amount': summa_etapa,
-            }
-
-
-class BdrFactTable(BdrPlanTable):
-    """ Утилиты таблицы БДР (Факт). """
-
-    async def get_issues(self):
-        """ Получить все нужные задачи. """
-        # Все задачи
-        all_issues = await tracker_api.get_list_issues()
-
-        # Объект компании из БД
-        company = await Company.get(login=os.getenv('COMPANY_LOGIN'))
-
-        # Список допустимых очередей
-        queues = (
-            company.incomes_queues
-            + company.expenses_queues
-            + company.staff_salary_queues
-        )
-
-        filter_ = {
-            'issue.queue.key': queues,
-            'issue.summaEtapa != 0': True,
-            'issue.deadline.split("-")[0]': str(self.year),
-        }
-
-        # Из общего списка задач фильтровать нужные
-        issues = await self.get_target_issues(all_issues, filter_)
-
-        if not issues:
-            log.error('Задачи не были получены после фильтрации.')
-
-        return issues
-
-    async def get_target_month(self, issue, target_: str = 'deadline'):
-        """ Получить целевой месяц задачи. (Переопределение на deadline). """
-
-        return await super().get_target_month(issue, target_)
-
-
-class BdrByProjectsPlan(Tables):
+class BdrByProjectsTable(Tables):
     """ Утилиты таблицы БДР по проектам (План). """
 
     async def get_data(self, is_plan=True):
@@ -468,27 +339,3 @@ class BdrByProjectsPlan(Tables):
                     }
 
         return data
-
-    async def get_target_month(self, issue, target_: str = 'end'):
-        """ Получить целевой месяц задачи. """
-        if target_ not in ['end', 'deadline']:
-            log.error('target_ -> in ["end", "deadline"]')
-            raise ValueError('target_ -> in ["end", "deadline"]')
-
-        if target_ == 'end':
-
-            if issue.end.split("-")[0] != str(self.year):
-                raise ValueError('Не подходящая по году задача')
-
-            return issue.end.split("-")[1]
-
-        if issue.deadline.split("-")[0] != str(self.year):
-            raise ValueError('Не подходящая по году задача')
-
-        return issue.deadline.split("-")[1]
-
-
-class BdrByProjectsFact(BdrByProjectsPlan):
-    """ Утилиты таблицы БДР по проектам (Факт). """
-
-    pass

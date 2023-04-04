@@ -10,7 +10,7 @@ from .settings import settings
 from .database.on_startup import create_template_of_company
 
 
-app = FastAPI()
+app = FastAPI(title='Aspira.Tracker API')
 
 # Настройка CORS
 app.add_middleware(

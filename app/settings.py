@@ -37,9 +37,9 @@ class Settings(BaseSettings):
         """ Логгер приложения. """
         logger.remove()
         logger.add(
-            "logs.log",
+            "logs/logs.log",
             level='DEBUG',
-            rotation="1 MB",
+            rotation="2 MB",
             format=(
                 "{time:YYYY-MM-DD at HH:mm:ss} "
                 "| {level} | {name} {line} | {message}"

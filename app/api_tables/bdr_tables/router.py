@@ -5,9 +5,7 @@ from fastapi import APIRouter  # Depends
 # from app.api_auth.bad_responses import AuthExceptions
 # from ..permissions import is_company_authorized_permission
 from .schemas import BdrCommon, Project
-from .utils import (
-    BdrPlanTable, BdrFactTable, BdrByProjectsPlan, BdrByProjectsFact
-)
+from .utils import BdrTable, BdrByProjectsTable
 
 
 bdr_router = APIRouter(
@@ -29,7 +27,7 @@ async def bdr_plan(year: int = None):
     if not year:
         year = datetime.now().year
 
-    table = BdrPlanTable(year)
+    table = BdrTable(year)
     result = await table.get_data()
 
     return result
@@ -41,8 +39,8 @@ async def bdr_fact(year: int = None):
     if not year:
         year = datetime.now().year
 
-    table = BdrFactTable(year)
-    result = await table.get_data()
+    table = BdrTable(year)
+    result = await table.get_data(is_plan=False)
 
     return result
 
@@ -53,7 +51,7 @@ async def bdr_by_projects_plan(year: int = None):
     if not year:
         year = datetime.now().year
 
-    table = BdrByProjectsPlan(year)
+    table = BdrByProjectsTable(year)
     result = await table.get_data()
 
     return result
@@ -65,7 +63,7 @@ async def bdr_by_projects_fact(year: int = None):
     if not year:
         year = datetime.now().year
 
-    table = BdrByProjectsFact(year)
+    table = BdrByProjectsTable(year)
     result = await table.get_data(is_plan=False)
 
     return result

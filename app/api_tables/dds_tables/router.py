@@ -5,9 +5,7 @@ from fastapi import APIRouter  # Depends
 # from app.api_auth.bad_responses import AuthExceptions
 # from ..permissions import is_company_authorized_permission
 from .schemas import DdsCommon, Project
-from .utils import (
-    DdsPlanTable, DdsFactTable, DdsByProjectsPlan, DdsByProjectsFact,
-)
+from .utils import DdsTable, DdsByProjects
 
 
 dds_router = APIRouter(
@@ -26,7 +24,7 @@ async def dds_plan(year: int = None):
     if not year:
         year = datetime.now().year
 
-    table = DdsPlanTable(year)
+    table = DdsTable(year)
     result = await table.get_data()
 
     return result
@@ -38,8 +36,8 @@ async def dds_fact(year: int = None):
     if not year:
         year = datetime.now().year
 
-    table = DdsFactTable(year)
-    result = await table.get_data()
+    table = DdsTable(year)
+    result = await table.get_data(is_plan=False)
 
     return result
 
@@ -50,7 +48,7 @@ async def dds_by_projects_plan(year: int = None):
     if not year:
         year = datetime.now().year
 
-    table = DdsByProjectsPlan(year)
+    table = DdsByProjects(year)
     result = await table.get_data()
 
     return result
@@ -62,7 +60,7 @@ async def dds_by_projects_fact(year: int = None):
     if not year:
         year = datetime.now().year
 
-    table = DdsByProjectsFact(year)
-    result = await table.get_data()
+    table = DdsByProjects(year)
+    result = await table.get_data(is_plan=False)
 
     return result
